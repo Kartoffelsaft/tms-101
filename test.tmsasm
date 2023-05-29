@@ -1,0 +1,19 @@
+mov 300 c
+mrk outer
+
+    mov 300 d
+    mrk inner
+
+        bxr c d a
+        add &c &d b
+        bnd a b &d
+
+    sub d 1 d
+    mov d t
+    tjp inner
+
+sub c 1 c
+mov c t
+tjp outer
+
+nxt

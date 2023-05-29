@@ -100,15 +100,8 @@ Instruction :: union {
     Nop,
 }
 
-generate_program :: proc(instrs: []Instruction) -> Program {
-    return Program{
-        rega = 0,
-        regb = 0,
-        regc = 0,
-        regd = 0,
-        regt = 0,
-
-        instructions = instrs,
-        instructionIdx = 0,
-    }
+generate_program :: proc(instrs: []Instruction) -> (prg: ^Program) {
+    prg = new(Program)
+    prg.instructions = instrs
+    return
 }

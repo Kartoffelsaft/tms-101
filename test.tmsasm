@@ -1,16 +1,22 @@
-mov 300 c
+mov 10000 c
 mrk outer
 
-    mov 300 d
-    mrk inner
+    mrk l1
+        mov @rng &a
+    add a 1 a
+    sub a 60000 t
+    tjp l1
 
-        bxr c d a
-        add &c &d b
-        bnd a b &d
-
-    sub d 1 d
-    mov d t
-    tjp inner
+    sub a 1 a
+    sub a 1 b
+    mrk l2
+        sub &a &b t
+        sub b 1 b
+        fjp exit
+        mov b t
+        fjp exit
+        jmp l2
+    mrk exit
 
 sub c 1 c
 mov c t

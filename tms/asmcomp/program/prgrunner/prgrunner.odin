@@ -4,13 +4,12 @@ import   "core:fmt"
 import p ".."
 import   "../../../ctx"
 
-run_program :: proc(ctx := cast(^ctx.TmxCtx)context.user_ptr) {
-    context.user_ptr = &ctx.prg // 1,000x perf improvement for some reason
+run_program :: proc() {
     for step_program() {}
 }
 
 @(private)
-step_program :: proc(prg := cast(^p.Program)context.user_ptr) -> bool #no_bounds_check {
+step_program :: proc(prg := (cast(^ctx.TmxCtx)context.user_ptr).prg) -> bool #no_bounds_check {
     using p
 
     if prg.instructionIdx > len(prg.instructions) do prg.instructionIdx = 0
@@ -39,7 +38,7 @@ step_program :: proc(prg := cast(^p.Program)context.user_ptr) -> bool #no_bounds
 }
 
 @(private)
-read :: proc(val: p.ReadVal, prg := cast(^p.Program)context.user_ptr) -> i16 {
+read :: proc(val: p.ReadVal, prg := (cast(^ctx.TmxCtx)context.user_ptr).prg) -> i16 {
     using p
 
     switch v in val {
@@ -59,7 +58,7 @@ read :: proc(val: p.ReadVal, prg := cast(^p.Program)context.user_ptr) -> i16 {
 }
 
 @(private)
-write :: proc(val: i16, trg: p.WriteVal, prg := cast(^p.Program)context.user_ptr) {
+write :: proc(val: i16, trg: p.WriteVal, prg := (cast(^ctx.TmxCtx)context.user_ptr).prg) {
     using p
 
     switch t in trg {
@@ -76,7 +75,7 @@ write :: proc(val: i16, trg: p.WriteVal, prg := cast(^p.Program)context.user_ptr
 }
 
 @(private)
-print :: proc(val: p.Printable, prg := cast(^p.Program)context.user_ptr) {
+print :: proc(val: p.Printable, prg := (cast(^ctx.TmxCtx)context.user_ptr).prg) {
     using p
 
     switch v in val {

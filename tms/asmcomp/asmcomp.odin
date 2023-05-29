@@ -11,7 +11,7 @@ import "parser"
 import "program"
 
 
-compile :: proc(filename: string) -> (program.Program, bool) {
+compile :: proc(filename: string) -> (^program.Program, bool) {
     content, success := os.read_entire_file_from_filename(filename)
     defer delete(content)
 

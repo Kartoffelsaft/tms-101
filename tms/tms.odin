@@ -23,6 +23,7 @@ _main :: proc() {
     time.stopwatch_start(&compStopwatch)
     prg, ok := asmcomp.compile(os.args[1])
     if !ok do log.error("compile failed with errors")
+    defer free(prg)
     time.stopwatch_stop(&compStopwatch)
     log.info("compile took", time.stopwatch_duration(compStopwatch))
 

@@ -6,6 +6,7 @@ import    "core:mem"
 import    "core:log"
 import    "core:time"
 import    "core:math"
+import    "core:strings"
 import rl "vendor:raylib"
 
 import    "asmcomp"
@@ -13,8 +14,8 @@ import    "asmcomp/program/prgrunner"
 import    "ctx"
 
 _main :: proc() {
-    if (len(os.args) < 2) {
-        fmt.eprintln("No file given to read")
+    if (len(os.args) < 3) {
+        fmt.eprintln("Not enough files given to read (needs 2)")
         return
     }
 
@@ -38,6 +39,7 @@ _main :: proc() {
     rl.SetTargetFPS(60)
 
     uctx.vDisplay = rl.LoadRenderTexture(80, 80)
+    uctx.spritemap = rl.LoadTexture(strings.clone_to_cstring(os.args[2]))
     
     for !rl.WindowShouldClose() {
         rl.BeginDrawing()

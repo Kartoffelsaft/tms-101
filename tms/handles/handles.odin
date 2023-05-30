@@ -38,8 +38,15 @@ WRITE_HANDLES := map[string]proc(i16) {
     "bg"   = proc(x: i16) { rl.ClearBackground(writehandle_to_color(x)) },
     "draw" = proc(x: i16) {
         ctx := cast(^ctx.TmxCtx)context.user_ptr
-        rl.DrawRectangle(cast(i32)ctx.prg.regx, cast(i32)ctx.prg.regy, 5, 5, writehandle_to_color(x))
-        log.debugf("draw to %d, %d", ctx.prg.regx, ctx.prg.regy)
+        rl.DrawTexturePro(
+            ctx.spritemap,
+            {cast(f32)((x & 0xf) << 3), cast(f32)((x & 0xf0) >> 1), 8, 8},
+            {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy  , 8, 8},
+            {0, 0},
+            0,
+            rl.WHITE,
+        )
+        log.debugf("draw texture %d to %d, %d", x, ctx.prg.regx, ctx.prg.regy)
     },
     "fps"  = proc(x: i16) { rl.SetTargetFPS(cast(i32)x) },
 }

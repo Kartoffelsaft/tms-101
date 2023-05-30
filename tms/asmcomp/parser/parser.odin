@@ -9,33 +9,7 @@ import rl "vendor:raylib"
 import    "../tokenizer"
 import    "../program"
 import    "../../ctx"
-
-writehandle_to_color :: proc(x: i16) -> rl.Color {
-    return rl.Color{
-        cast(u8)(transmute(u16)x & 0b11111_000000_00000 >> 8),
-        cast(u8)(transmute(u16)x & 0b00000_111111_00000 >> 3),
-        cast(u8)(transmute(u16)x & 0b00000_000000_11111 << 3),
-        255,
-    }
-}
-
-READ_HANDLES := map[string]proc() -> i16 {
-    "rng" = proc() -> i16 { return transmute(i16)cast(u16)(rand.int31() & 0xffff) },
-    "msx" = proc() -> i16 { return cast(i16)rl.GetMouseX() },
-    "msy" = proc() -> i16 { return cast(i16)rl.GetMouseY() },
-    "fps" = proc() -> i16 { return cast(i16)rl.GetFPS() },
-}
-WRITE_HANDLES := map[string]proc(i16) {
-    "rng" = proc(x: i16) { rand.set_global_seed(cast(u64)x) },
-    "void" = proc(x: i16) {},
-    "bg" = proc(x: i16) { rl.ClearBackground(writehandle_to_color(x)) },
-    "draw" = proc(x: i16) {
-        ctx := cast(^ctx.TmxCtx)context.user_ptr
-        rl.DrawRectangle(cast(i32)ctx.prg.regx, cast(i32)ctx.prg.regy, 5, 5, writehandle_to_color(x))
-        log.debugf("draw to %d, %d", ctx.prg.regx, ctx.prg.regy)
-    },
-    "fps" = proc(x: i16) { rl.SetTargetFPS(cast(i32)x) }
-}
+import    "../../handles"
 
 token_as_readval :: proc(tk: tokenizer.Token) -> (program.ReadVal, bool) {
     using program
@@ -53,7 +27,7 @@ token_as_readval :: proc(tk: tokenizer.Token) -> (program.ReadVal, bool) {
         else do return Ref{new_clone(to)}, true
     }
     if rv, ok := tk.(tokenizer.Hdl ); ok {
-        hdl, ok := READ_HANDLES[rv.val]
+        hdl, ok := handles.READ_HANDLES[rv.val]
         if !ok do return nil, false
         else do return RHdl{hdl}, true
     }
@@ -77,7 +51,7 @@ token_as_writeval :: proc(tk: tokenizer.Token) -> (program.WriteVal, bool) {
         else do return Ref{new_clone(to)}, true
     }
     if rv, ok := tk.(tokenizer.Hdl ); ok {
-        hdl, ok := WRITE_HANDLES[rv.val]
+        hdl, ok := handles.WRITE_HANDLES[rv.val]
         if !ok do return nil, false
         else do return WHdl{hdl}, true
     }
@@ -138,6 +112,7 @@ extract_marks :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (unmar
 parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[string]int) -> (program.Instruction, bool) {
     using program
 
+    // I'm sure there's a way to apply DRY here, but I highly doubt that'd be more readable
     switch _ in instr.tokens[0] {
         case tokenizer.Add:
             if len(instr.tokens) != 4 {

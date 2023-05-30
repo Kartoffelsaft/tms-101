@@ -5,6 +5,7 @@ import    "core:fmt"
 import    "core:mem"
 import    "core:log"
 import    "core:time"
+import    "core:math"
 import rl "vendor:raylib"
 
 import    "asmcomp"
@@ -17,8 +18,9 @@ _main :: proc() {
         return
     }
 
-    context.user_ptr = new(ctx.TmxCtx)
-    defer free(context.user_ptr)
+    uctx := new(ctx.TmxCtx)
+    context.user_ptr = uctx
+    defer free(uctx)
 
     compStopwatch := time.Stopwatch{}
     time.stopwatch_start(&compStopwatch)
@@ -28,17 +30,35 @@ _main :: proc() {
     time.stopwatch_stop(&compStopwatch)
     log.info("compile took", time.stopwatch_duration(compStopwatch))
 
-    (cast(^ctx.TmxCtx)context.user_ptr).prg = prg
+    uctx.prg = prg
 
     rl.InitWindow(800, 600, "tms-101")
     defer rl.CloseWindow()
 
     rl.SetTargetFPS(60)
+
+    uctx.vDisplay = rl.LoadRenderTexture(80, 80)
     
     for !rl.WindowShouldClose() {
         rl.BeginDrawing()
         defer rl.EndDrawing()
-        prgrunner.run_program()
+
+        rl.ClearBackground(rl.BLACK)
+
+        {
+            rl.BeginTextureMode(uctx.vDisplay)
+            defer rl.EndTextureMode()
+            prgrunner.run_program()
+        }
+
+        pos, scale := ctx.get_virtual_display_pos_scale()
+        rl.DrawTextureEx(
+            uctx.vDisplay.texture,
+            pos,
+            0,
+            cast(f32)scale,
+            rl.WHITE,
+        )
     }
 }
 

@@ -1,4 +1,4 @@
-mov 1 @fps
+mov 60 @fps
 
 mrk gameloop
 sub @msx 10 x
@@ -9,5 +9,4 @@ mov b1111100000011111 @draw
 
 nxt
 
-add @fps 1 @fps
 jmp gameloop

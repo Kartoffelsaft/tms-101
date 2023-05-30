@@ -1,25 +1,13 @@
-mov 10000 c
-mrk outer
+mov 1 @fps
 
-    mrk l1
-        mov @rng &a
-    add a 1 a
-    sub a 60000 t
-    tjp l1
+mrk gameloop
+sub @msx 10 x
+sub @msy 10 y
 
-    sub a 1 a
-    sub a 1 b
-    mrk l2
-        sub &a &b t
-        sub b 1 b
-        fjp exit
-        mov b t
-        fjp exit
-        jmp l2
-    mrk exit
-
-sub c 1 c
-mov c t
-tjp outer
+mov b0000011111100000 @bg
+mov b1111100000011111 @draw
 
 nxt
+
+add @fps 1 @fps
+jmp gameloop

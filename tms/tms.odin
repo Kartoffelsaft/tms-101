@@ -1,14 +1,15 @@
 package tms
 
-import "core:os"
-import "core:fmt"
-import "core:mem"
-import "core:log"
-import "core:time"
+import    "core:os"
+import    "core:fmt"
+import    "core:mem"
+import    "core:log"
+import    "core:time"
+import rl "vendor:raylib"
 
-import "asmcomp"
-import "asmcomp/program/prgrunner"
-import "ctx"
+import    "asmcomp"
+import    "asmcomp/program/prgrunner"
+import    "ctx"
 
 _main :: proc() {
     if (len(os.args) < 2) {
@@ -28,12 +29,17 @@ _main :: proc() {
     log.info("compile took", time.stopwatch_duration(compStopwatch))
 
     (cast(^ctx.TmxCtx)context.user_ptr).prg = prg
+
+    rl.InitWindow(800, 600, "tms-101")
+    defer rl.CloseWindow()
+
+    rl.SetTargetFPS(60)
     
-    runStopwatch := time.Stopwatch{}
-    time.stopwatch_start(&runStopwatch)
-    prgrunner.run_program()
-    time.stopwatch_stop(&runStopwatch)
-    log.info("run took", time.stopwatch_duration(runStopwatch))
+    for !rl.WindowShouldClose() {
+        rl.BeginDrawing()
+        defer rl.EndDrawing()
+        prgrunner.run_program()
+    }
 }
 
 main :: proc() {
@@ -42,7 +48,7 @@ main :: proc() {
     mem.tracking_allocator_init(&trackalloc, context.allocator)
     context.allocator = mem.tracking_allocator(&trackalloc)
 
-    context.logger = log.create_console_logger()
+    context.logger = log.create_console_logger(log.Level.Info)
 
     _main()
 

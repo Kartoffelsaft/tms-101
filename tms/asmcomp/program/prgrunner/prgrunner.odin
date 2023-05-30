@@ -28,7 +28,7 @@ step_program :: proc(prg := (cast(^ctx.TmxCtx)context.user_ptr).prg) -> bool #no
         case Jmp: prg.instructionIdx = instr.target.instrIdx - 1 // -1 because of below ++
         case Fjp: if prg.regt == 0 do prg.instructionIdx = instr.target.instrIdx - 1 
         case Tjp: if prg.regt != 0 do prg.instructionIdx = instr.target.instrIdx - 1 
-        case Nxt: return false
+        case Nxt: prg.instructionIdx += 1; return false
         case Nop:
     }
 

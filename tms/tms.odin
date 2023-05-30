@@ -10,6 +10,7 @@ import    "core:strings"
 import rl "vendor:raylib"
 
 import    "asmcomp"
+import    "asmcomp/program"
 import    "asmcomp/program/prgrunner"
 import    "ctx"
 
@@ -27,6 +28,7 @@ _main :: proc() {
     time.stopwatch_start(&compStopwatch)
     prg, ok := asmcomp.compile(os.args[1])
     if !ok do log.error("compile failed with errors")
+    defer program.delete_program(prg^)
     defer free(prg)
     time.stopwatch_stop(&compStopwatch)
     log.info("compile took", time.stopwatch_duration(compStopwatch))

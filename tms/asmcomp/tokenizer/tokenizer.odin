@@ -130,7 +130,11 @@ tokenize :: proc(s: string) -> Token {
 
             switch {
                 case parsed: return Num{i}
-                case s[0] == '"': return Str{s[1:len(s)-1]}
+                case s[0] == '"': 
+                    r, a, ok := strconv.unquote_string(s)
+                    if !ok do r = strings.clone_from(s[1:len(s)-1])
+                    else if !a do r = strings.clone_from(r)
+                    return Str{r}
                 case s[0] == '&': return Ref{new_clone(tokenize(s[1:]))}
                 case s[0] == '@': return Hdl{s[1:]}
                 case: return Idn{s}

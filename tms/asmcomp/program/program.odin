@@ -105,3 +105,13 @@ generate_program :: proc(instrs: []Instruction) -> (prg: ^Program) {
     prg.instructions = instrs
     return
 }
+
+delete_program :: proc(prg: Program) {
+    for instr in prg.instructions {
+        #partial switch i in instr {
+            case Prn:
+                if s, isS := i.val.(Str); isS do delete(s.val)
+        }
+    }
+    delete(prg.instructions)
+}

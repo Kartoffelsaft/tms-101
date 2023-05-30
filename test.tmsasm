@@ -7,6 +7,9 @@ sub @msy 10 y
 mov b0000011111100000 @bg
 mov #80 @draw
 
+prn "\ta\tb\tc"
+prn "lol"
+
 nxt
 
 jmp gameloop

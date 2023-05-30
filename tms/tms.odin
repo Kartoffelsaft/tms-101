@@ -52,11 +52,12 @@ _main :: proc() {
         }
 
         pos, scale := ctx.get_virtual_display_pos_scale()
-        rl.DrawTextureEx(
+        rl.DrawTexturePro(
             uctx.vDisplay.texture,
-            pos,
+            rl.Rectangle{0, 0, cast(f32)uctx.vDisplay.texture.width, cast(f32)-uctx.vDisplay.texture.height},
+            rl.Rectangle{pos.x, pos.y, cast(f32)(uctx.vDisplay.texture.width * scale), cast(f32)(uctx.vDisplay.texture.height * scale)},
+            {0, 0},
             0,
-            cast(f32)scale,
             rl.WHITE,
         )
     }

@@ -7,12 +7,15 @@ import    "core:log"
 import    "core:time"
 import    "core:math"
 import    "core:strings"
+import    "core:slice"
 import rl "vendor:raylib"
 
 import    "asmcomp"
 import    "asmcomp/program"
 import    "asmcomp/program/prgrunner"
 import    "ctx"
+
+DEFAULT_FONT := #load("../bswf.png")
 
 _main :: proc() {
     if (len(os.args) < 3) {
@@ -42,6 +45,7 @@ _main :: proc() {
 
     uctx.vDisplay = rl.LoadRenderTexture(80, 80)
     uctx.spritemap = rl.LoadTexture(strings.clone_to_cstring(os.args[2]))
+    uctx.font = rl.LoadFontFromImage(rl.LoadImageFromMemory(".png", slice.as_ptr(DEFAULT_FONT), cast(i32)len(DEFAULT_FONT)), rl.MAGENTA, ' ')
     
     for !rl.WindowShouldClose() {
         rl.BeginDrawing()
@@ -53,6 +57,7 @@ _main :: proc() {
             rl.BeginTextureMode(uctx.vDisplay)
             defer rl.EndTextureMode()
             prgrunner.run_program()
+            rl.DrawTextEx(uctx.font, "abc 123 123123", {0, 0}, 6, 1, rl.WHITE)
         }
 
         pos, scale := ctx.get_virtual_display_pos_scale()

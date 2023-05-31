@@ -30,7 +30,10 @@ _main :: proc() {
     compStopwatch := time.Stopwatch{}
     time.stopwatch_start(&compStopwatch)
     prg, ok := asmcomp.compile(os.args[1])
-    if !ok do log.error("compile failed with errors")
+    if !ok {
+        log.error("compile failed with errors")
+        return
+    }
     defer program.delete_program(prg^)
     defer free(prg)
     time.stopwatch_stop(&compStopwatch)

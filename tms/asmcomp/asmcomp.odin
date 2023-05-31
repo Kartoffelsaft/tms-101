@@ -30,7 +30,8 @@ compile :: proc(filename: string) -> (^program.Program, bool) {
         }
 
 
-        instrsTok := slice.mapper(instrsStr, tokenizer.tokenize_instuction_str)
+        instrsTok, oktok := tokenizer.tokenize_instuctions_str(instrsStr)
+        if !oktok do return ---, false
         defer {
             for inst in instrsTok do delete(inst.tokens)
             delete(instrsTok)

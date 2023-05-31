@@ -1,7 +1,9 @@
 mov 60 @fps
 
+prn "teststr"
+
 mrk gameloop
-sub @msx 10 x
+mov '\t' x
 sub @msy 10 y
 
 mov b0000011111100000 @bg

@@ -3,6 +3,7 @@ package tokenizer
 import "core:strings"
 import "core:strconv"
 import "core:slice"
+import "core:log"
 
 import "../lexer"
 
@@ -91,58 +92,77 @@ parse_num :: proc(s: string) -> (value: i16, ok: bool) {
     return
 }
 
-tokenize :: proc(s: string) -> Token {
+tokenize :: proc(s: string) -> (Token, bool) {
     sl := strings.to_lower(s)
     defer delete(sl)
 
     switch sl {
-        case "mov", "move": return Mov{}
+        case "mov", "move": return Mov{}, true
 
-        case "add"        : return Add{}
-        case "sub"        : return Sub{}
-        case "mul"        : return Mul{}
-        case "div"        : return Div{} 
-        case "mod"        : return Mod{} 
-        case "bnd"        : return BNd{} 
-        case "bor"        : return BOr{} 
-        case "bxr"        : return BXr{} 
+        case "add"        : return Add{}, true
+        case "sub"        : return Sub{}, true
+        case "mul"        : return Mul{}, true
+        case "div"        : return Div{}, true 
+        case "mod"        : return Mod{}, true 
+        case "bnd"        : return BNd{}, true 
+        case "bor"        : return BOr{}, true 
+        case "bxr"        : return BXr{}, true 
 
-        case "prn"        : return Prn{}
+        case "prn"        : return Prn{}, true
 
-        case "mrk"        : return Mrk{} 
-        case "jmp"        : return Jmp{}
-        case "fjp"        : return Fjp{}
-        case "tjp"        : return Tjp{}
-        case "nxt"        : return Nxt{}
-        case "nop"        : return Nop{}
+        case "mrk"        : return Mrk{}, true 
+        case "jmp"        : return Jmp{}, true
+        case "fjp"        : return Fjp{}, true
+        case "tjp"        : return Tjp{}, true
+        case "nxt"        : return Nxt{}, true
+        case "nop"        : return Nop{}, true
 
-        case "rega", "a"  : return RegA{}
-        case "regb", "b"  : return RegB{}
-        case "regc", "c"  : return RegC{}
-        case "regd", "d"  : return RegD{}
+        case "rega", "a"  : return RegA{}, true
+        case "regb", "b"  : return RegB{}, true
+        case "regc", "c"  : return RegC{}, true
+        case "regd", "d"  : return RegD{}, true
 
-        case "regt", "t"  : return RegT{}
-        case "regx", "x"  : return RegX{}
-        case "regy", "y"  : return RegY{}
+        case "regt", "t"  : return RegT{}, true
+        case "regx", "x"  : return RegX{}, true
+        case "regy", "y"  : return RegY{}, true
 
         case: {
             i, parsed := parse_num(s)
 
             switch {
-                case parsed: return Num{i}
+                case parsed: return Num{i}, true
                 case s[0] == '"': 
                     r, a, ok := strconv.unquote_string(s)
-                    if !ok do r = strings.clone_from(s[1:len(s)-1])
+                    if !ok {
+                    }
                     else if !a do r = strings.clone_from(r)
-                    return Str{r}
-                case s[0] == '&': return Ref{new_clone(tokenize(s[1:]))}
-                case s[0] == '@': return Hdl{s[1:]}
-                case: return Idn{s}
+                    return Str{r}, true
+                case s[0] == '\'': 
+                    c, m, t, ok := strconv.unquote_char(s[1:len(s)-1], '\'')
+                    if !ok {
+                        log.errorf("could not parse character: %s", s)
+                        return nil, false
+                    } else if len(t) > 0 {
+                        log.errorf("single quotes used for more than one char: %s", s)
+                        return nil, false
+                    } else if m {
+                        log.warn("characters beyond ascii likely won't work")
+                    }
+                    return Num{cast(i16)c}, true
+                case s[0] == '&': 
+                    to, ok := tokenize(s[1:])
+                    if !ok {
+                        log.errorf("reference to invalid: %s", s)
+                        return nil, false
+                    }
+                    return Ref{new_clone(to)}, true
+                case s[0] == '@': return Hdl{s[1:]}, true
+                case: return Idn{s}, true
             }
         }
     }
     
-    return nil
+    return nil, false
 }
 
 Instruction_Tokenized :: struct {
@@ -150,10 +170,25 @@ Instruction_Tokenized :: struct {
     tokens: []Token,
 }
 
-tokenize_instuction_str :: proc(instr: lexer.Instruction_Str) -> Instruction_Tokenized {
+tokenize_instuction_str :: proc(instr: lexer.Instruction_Str) -> (Instruction_Tokenized, bool) {
+    tks := make([]Token, len(instr.contents))
+    for c, i in instr.contents {
+        ok := false
+        tks[i], ok = tokenize(c)
+        if !ok do return ---, false
+    }
+
     return Instruction_Tokenized {
         lineNum = instr.lineNum,
-        tokens = slice.mapper(instr.contents, tokenize),
-    }
+        tokens = tks,
+    }, true
 }
 
+tokenize_instuctions_str :: proc(instrs: []lexer.Instruction_Str) -> (ret: []Instruction_Tokenized, ok: bool) {
+    ret = make([]Instruction_Tokenized, len(instrs))
+    for s, i in instrs {
+        ret[i] = tokenize_instuction_str(s) or_return
+    }
+
+    return ret, true
+}

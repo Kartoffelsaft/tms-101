@@ -358,6 +358,10 @@ parse_instructions_tok :: proc(instructions: []tokenizer.Instruction_Tokenized) 
     for instr, i in unmarked {
         ok := false
         parsed[i], ok = parse_instruction(instr, markmap)
+        if !ok {
+            delete(parsed)
+            return nil, false
+        }
     }
 
     if context.logger.lowest_level <= log.Level.Info do fmt.println()

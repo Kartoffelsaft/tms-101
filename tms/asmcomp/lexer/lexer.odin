@@ -52,31 +52,71 @@ split_tokens :: proc(line: string) -> ([]string, bool) {
     quotSection := 0
     remainingStr := line[:]
 
-    for do if n := strings.index(remainingStr[quotSection%2:], "\""); n >= 0 {
-        switch quotSection % 2 {
-            case 0: // this is outside of " "
-                nextTokens := strings.split_multi(remainingStr[:n], {" ", "\t"})
-                defer delete(nextTokens)
-                append(&ret, ..nextTokens)
-                remainingStr = remainingStr[n:]
-            case 1: // this is inside of " "
-                // +1 to n to include the close quote
-                // another +1 because n does not account for the open quote
-                append(&ret, remainingStr[:n+2])
-                remainingStr = remainingStr[n+2:]
+    QuoteMode :: enum {
+        none,
+        single,
+        double,
+    }
+    qm := QuoteMode.none
+
+    for i := 0; i < len(remainingStr); i += 1 {
+        this := remainingStr[i]
+        if this == '\\' {
+            // escaped char
+            i += 1
+            continue
         }
-        quotSection += 1
-    } else do break
 
-    remTokens := strings.split_multi(remainingStr, {" ", "\t"})
-    defer delete(remTokens)
-    append(&ret, ..remTokens)
+        if this == '"' {
+            switch qm {
+                case .none:
+                    qm = .double
+                    nextTokens := strings.split_multi(remainingStr[:i], {" ", "\t"})
+                    defer delete(nextTokens)
+                    append(&ret, ..nextTokens)
+                    remainingStr = remainingStr[i:]
+                    i = 1
+                case .single:
+                    continue
+                case .double:
+                    qm = .none
+                    append(&ret, remainingStr[:i+1])
+                    remainingStr = remainingStr[i+1:]
+                    i = 0
+            }
+        }
+        if this == '\'' {
+            switch qm {
+                case .none:
+                    qm = .single
+                    nextTokens := strings.split_multi(remainingStr[:i], {" ", "\t"})
+                    defer delete(nextTokens)
+                    append(&ret, ..nextTokens)
+                    remainingStr = remainingStr[i:]
+                    i = 1
+                case .single:
+                    qm = .none
+                    append(&ret, remainingStr[:i+1])
+                    remainingStr = remainingStr[i+1:]
+                    i = 0
+                case .double:
+                    continue
+            }
+        }
+    }
 
-    if quotSection % 2 == 0 do return ret[:], true
-    else {
-        log.errorf("line \"%s\" is missing matching quotations", line)
+    if qm != QuoteMode.none {
+        log.errorf("unmatched quotes: %s", line)
         delete(ret)
         return nil, false
     }
+
+    if len(remainingStr) != 0 {
+        nextTokens := strings.split_multi(remainingStr, {" ", "\t"})
+        defer delete(nextTokens)
+        append(&ret, ..nextTokens)
+    }
+
+    return ret[:], true
 }
 

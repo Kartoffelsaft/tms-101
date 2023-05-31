@@ -71,6 +71,7 @@ Mod         :: struct{ lhs: ReadVal, rhs: ReadVal, target: WriteVal }
 BNd         :: struct{ lhs: ReadVal, rhs: ReadVal, target: WriteVal }
 BOr         :: struct{ lhs: ReadVal, rhs: ReadVal, target: WriteVal }
 BXr         :: struct{ lhs: ReadVal, rhs: ReadVal, target: WriteVal }
+Shf         :: struct{ lhs: ReadVal, rhs: ReadVal, target: WriteVal }
 
 Mov         :: struct{ source: ReadVal, target: WriteVal }
 
@@ -91,6 +92,7 @@ Instruction :: union {
     BNd,
     BOr,
     BXr,
+    Shf,
     Mov,
     Prn,
     Jmp,

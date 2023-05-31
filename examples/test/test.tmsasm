@@ -1,12 +1,16 @@
-mov 60 @fps
+mov 3 @fps
 
-prn "teststr"
+mov b0000011111100000 b
 
 mrk gameloop
 mov @msx x
 sub @msy 10 y
 
-mov b0000011111100000 @bg
+mov b @bg
+bnd b 1 a
+shf a -15 a
+shf b 1 b
+add a b b
 mov 'L' @txt
 mov 'o' @txt
 mov 'l' @txt

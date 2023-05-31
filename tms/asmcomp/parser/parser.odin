@@ -234,6 +234,21 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
                 log.errorf("Invalid argument on line %d", instr.lineNum)
                 return nil, false
             }
+        case tokenizer.Shf:
+            if len(instr.tokens) != 4 {
+                log.errorf("Shf on line %d has %d arguments, should take 3", instr.lineNum, len(instr.tokens))
+                return nil, false
+            }
+            nlhs, oklhs := token_as_readval(instr.tokens[1])
+            nrhs, okrhs := token_as_readval(instr.tokens[2])
+            ntar, oktar := token_as_writeval(instr.tokens[3])
+
+            if oklhs && okrhs && oktar {
+                return Shf{nlhs, nrhs, ntar}, true
+            } else {
+                log.errorf("Invalid argument on line %d", instr.lineNum)
+                return nil, false
+            }
         case tokenizer.Mov:
             if len(instr.tokens) != 3 {
                 log.errorf("Mov on line %d has %d arguments, should take 2", instr.lineNum, len(instr.tokens))

@@ -16,6 +16,7 @@ Mod     :: struct{}
 BNd     :: struct{}
 BOr     :: struct{}
 BXr     :: struct{}
+Shf     :: struct{}
 
 Prn     :: struct{}
 
@@ -50,6 +51,7 @@ Token :: union {
     BNd,
     BOr,
     BXr,
+    Shf,
 
     Prn,
 
@@ -107,6 +109,7 @@ tokenize :: proc(s: string) -> (Token, bool) {
         case "bnd"        : return BNd{}, true 
         case "bor"        : return BOr{}, true 
         case "bxr"        : return BXr{}, true 
+        case "shf"        : return Shf{}, true 
 
         case "prn"        : return Prn{}, true
 

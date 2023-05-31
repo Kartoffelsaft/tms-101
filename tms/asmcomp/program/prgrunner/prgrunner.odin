@@ -23,6 +23,8 @@ step_program :: proc(prg := (cast(^ctx.TmxCtx)context.user_ptr).prg) -> bool #no
         case BNd: write(read(instr.lhs) & read(instr.rhs), instr.target)
         case BOr: write(read(instr.lhs) | read(instr.rhs), instr.target)
         case BXr: write(read(instr.lhs) ~ read(instr.rhs), instr.target)
+            // why does odin require the right side of shifts to be unsigned?
+        case Shf: amt := read(instr.rhs); write(read(instr.lhs) >> transmute(u16)amt if amt > 0 else read(instr.lhs) << transmute(u16)(-amt), instr.target)
         case Mov: write(read(instr.source), instr.target)
         case Prn: print(instr.val)
         case Jmp: prg.instructionIdx = instr.target.instrIdx - 1 // -1 because of below ++

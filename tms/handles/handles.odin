@@ -2,6 +2,7 @@ package handles
 
 import    "core:log"
 import    "core:math/rand"
+import    "core:slice"
 import rl "vendor:raylib"
 
 import "../ctx"
@@ -47,6 +48,14 @@ WRITE_HANDLES := map[string]proc(i16) {
             rl.WHITE,
         )
         log.debugf("draw texture %d to %d, %d", x, ctx.prg.regx, ctx.prg.regy)
+    },
+    "txt"  = proc(x: i16) {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        char := cast(u8)(x & 0xff)
+        rl.DrawTextCodepoint(ctx.font, cast(rune)char, {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, rl.WHITE)
+        charwidth := cast(i16)rl.GetGlyphAtlasRec(ctx.font, cast(rune)char).width + 1 // +1 for padding
+        log.debugf("character %c has width %d", char, charwidth)
+        ctx.prg.regx += charwidth
     },
     "fps"  = proc(x: i16) { rl.SetTargetFPS(cast(i32)x) },
 }

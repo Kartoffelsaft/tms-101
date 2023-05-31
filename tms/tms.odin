@@ -14,41 +14,47 @@ import    "asmcomp"
 import    "asmcomp/program"
 import    "asmcomp/program/prgrunner"
 import    "ctx"
+import    "pconf"
 
 DEFAULT_FONT := #load("../bswf.png")
 
-_main :: proc() {
-    if (len(os.args) < 3) {
-        fmt.eprintln("Not enough files given to read (needs 2)")
-        return
-    }
+init :: proc() -> (uctx: ^ctx.TmxCtx) {
+    conf, confok := pconf.load_program_config()
+    if !confok do return nil
+    defer pconf.delete_program_config(conf)
 
-    uctx := new(ctx.TmxCtx)
-    context.user_ptr = uctx
-    defer free(uctx)
+    uctx = new(ctx.TmxCtx)
 
     compStopwatch := time.Stopwatch{}
     time.stopwatch_start(&compStopwatch)
-    prg, ok := asmcomp.compile(os.args[1])
-    if !ok {
+    prg, prgok := asmcomp.compile(conf.asmfile)
+    if !prgok {
         log.error("compile failed with errors")
         return
     }
-    defer program.delete_program(prg^)
-    defer free(prg)
     time.stopwatch_stop(&compStopwatch)
     log.info("compile took", time.stopwatch_duration(compStopwatch))
 
     uctx.prg = prg
 
     rl.InitWindow(800, 600, "tms-101")
-    defer rl.CloseWindow()
 
     rl.SetTargetFPS(60)
 
-    uctx.vDisplay = rl.LoadRenderTexture(80, 80)
-    uctx.spritemap = rl.LoadTexture(strings.clone_to_cstring(os.args[2]))
+    uctx.vDisplay = rl.LoadRenderTexture(cast(i32)conf.resx, cast(i32)conf.resy)
+    uctx.spritemap = rl.LoadTexture(strings.clone_to_cstring(conf.spritemapfile))
     uctx.font = rl.LoadFontFromImage(rl.LoadImageFromMemory(".png", slice.as_ptr(DEFAULT_FONT), cast(i32)len(DEFAULT_FONT)), rl.MAGENTA, ' ')
+
+    return uctx
+}
+
+_main :: proc() {
+    uctx := init()
+    if uctx == nil do return
+    context.user_ptr = uctx
+    defer free(uctx)
+    defer rl.CloseWindow()
+    defer ctx.delete_tmxctx(uctx^)
     
     for !rl.WindowShouldClose() {
         rl.BeginDrawing()
@@ -60,7 +66,6 @@ _main :: proc() {
             rl.BeginTextureMode(uctx.vDisplay)
             defer rl.EndTextureMode()
             prgrunner.run_program()
-            rl.DrawTextEx(uctx.font, "abc 123 123123", {0, 0}, 6, 1, rl.WHITE)
         }
 
         pos, scale := ctx.get_virtual_display_pos_scale()

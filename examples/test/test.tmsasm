@@ -3,11 +3,13 @@ mov 60 @fps
 prn "teststr"
 
 mrk gameloop
-mov '\t' x
+mov @msx x
 sub @msy 10 y
 
 mov b0000011111100000 @bg
-mov #80 @draw
+mov 'L' @txt
+mov 'o' @txt
+mov 'l' @txt
 
 nxt
 

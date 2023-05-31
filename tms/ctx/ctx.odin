@@ -22,3 +22,12 @@ get_virtual_display_pos_scale :: proc(vdisp := (cast(^TmxCtx)context.user_ptr).v
 
     return
 }
+
+delete_tmxctx :: proc(ctx: TmxCtx) {
+    program.delete_program(ctx.prg^)
+    free(ctx.prg)
+
+    rl.UnloadRenderTexture(ctx.vDisplay)
+    rl.UnloadTexture(ctx.spritemap)
+    rl.UnloadFont(ctx.font)
+}

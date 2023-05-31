@@ -32,6 +32,7 @@ READ_HANDLES := map[string]ReadHandle {
     "resx" = proc() -> i16 { return cast(i16)(cast(^ctx.TmxCtx)context.user_ptr).vDisplay.texture.width },
     "resy" = proc() -> i16 { return cast(i16)(cast(^ctx.TmxCtx)context.user_ptr).vDisplay.texture.height },
     "fps"  = proc() -> i16 { return cast(i16)rl.GetFPS() },
+    "frame" = proc() -> i16 { return transmute(i16)cast(u16)(cast(^ctx.TmxCtx)context.user_ptr).frame },
 }
 WRITE_HANDLES := map[string]proc(i16) {
     "rng"  = proc(x: i16) { rand.set_global_seed(cast(u64)x) },
@@ -47,9 +48,20 @@ WRITE_HANDLES := map[string]proc(i16) {
             0,
             rl.WHITE,
         )
+        ctx.prg.regx += 8
         log.debugf("draw texture %d to %d, %d", x, ctx.prg.regx, ctx.prg.regy)
     },
-    "txt"  = proc(x: i16) {
+    "blit" = proc(x: i16) {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        rl.DrawPixel(cast(i32)ctx.prg.regx, cast(i32)ctx.prg.regy, writehandle_to_color(x))
+        ctx.prg.regx += 1
+    },
+    "fbox" = proc(x: i16) {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        rl.DrawRectangle(cast(i32)ctx.prg.regx, cast(i32)ctx.prg.regy, 8, 8, writehandle_to_color(x))
+        ctx.prg.regx += 8
+    },
+    "text"  = proc(x: i16) {
         ctx := cast(^ctx.TmxCtx)context.user_ptr
         char := cast(u8)(x & 0xff)
         rl.DrawTextCodepoint(ctx.font, cast(rune)char, {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, rl.WHITE)

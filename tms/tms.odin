@@ -77,6 +77,8 @@ _main :: proc() {
             0,
             rl.WHITE,
         )
+
+        uctx.frame += 1
     }
 }
 

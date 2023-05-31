@@ -32,10 +32,7 @@ compile :: proc(filename: string) -> (^program.Program, bool) {
 
         instrsTok, oktok := tokenizer.tokenize_instuctions_str(instrsStr)
         if !oktok do return ---, false
-        defer {
-            for inst in instrsTok do delete(inst.tokens)
-            delete(instrsTok)
-        }
+        defer tokenizer.delete_instructions_tok(instrsTok)
 
         if context.logger.lowest_level <= log.Level.Info do fmt.println()
         for i in instrsTok {

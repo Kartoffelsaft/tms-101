@@ -109,10 +109,34 @@ generate_program :: proc(instrs: []Instruction) -> (prg: ^Program) {
 }
 
 delete_program :: proc(prg: Program) {
+    delete_ref_rv :: proc(v: ReadVal) { if ref, ok := v.(Ref); ok {
+        delete_ref_rv(ref.val^) 
+        free(ref.val)
+    }}
+    delete_ref_wv :: proc(v: WriteVal) { if ref, ok := v.(Ref); ok {
+        delete_ref_rv(ref.val^) 
+        free(ref.val)
+    }}
+    delete_ref :: proc {delete_ref_rv, delete_ref_wv}
+
     for instr in prg.instructions {
         #partial switch i in instr {
             case Prn:
                 if s, isS := i.val.(Str); isS do delete(s.val)
+
+            // again with the whole DRY principle; I can think of ways to not repeat
+            // myself but I'm not doing it because you wouldn't understand what you're
+            // looking at like you would here
+            case Add: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case Sub: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case Mul: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case Div: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case Mod: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case BNd: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case BOr: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case BXr: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case Shf: delete_ref(i.lhs); delete_ref(i.rhs); delete_ref(i.target)
+            case Mov: delete_ref(i.source); delete_ref(i.target)
         }
     }
     delete(prg.instructions)

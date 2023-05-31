@@ -386,3 +386,4 @@ parse_instructions_tok :: proc(instructions: []tokenizer.Instruction_Tokenized) 
 
     return parsed, true
 }
+

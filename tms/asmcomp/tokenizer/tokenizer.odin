@@ -195,3 +195,19 @@ tokenize_instuctions_str :: proc(instrs: []lexer.Instruction_Str) -> (ret: []Ins
 
     return ret, true
 }
+
+delete_instructions_tok :: proc(instrs: []Instruction_Tokenized) {
+    for instr in instrs {
+        for token in instr.tokens do delete_token(token)
+        delete(instr.tokens)
+    }
+    delete(instrs)
+}
+
+delete_token :: proc(instr: Token) {
+    #partial switch i in instr {
+        case Ref: 
+            delete_token(i.val^)
+            free(i.val)
+    }
+}

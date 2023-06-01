@@ -1,0 +1,52 @@
+; Starslide
+;
+; This program draws a bunch of lines across the screen,
+; kind of like a movie that's trying to hard to be star wars
+;
+
+mov 60 @fps
+
+; fill the first 40 memory addresses with random horizontal
+; positions on the screen
+; We don't need to `mov 0 a` because all registers/memory start 0
+mrk setuploop
+    mod @rng @resx &a
+    add a 1 a
+    sub a 40 t
+tjp setuploop
+
+
+mrk gameloop
+    mov 0 @bg ; black background
+
+    ; for a in [0, 40)
+    mov 0 a
+    mrk drawlines
+        mov &a x  ; Grab our x position from memory
+
+        mul a 5 y ; I was mainly too lazy to generate y positions,
+        add y 2 y ; so I just generate them by the index
+
+        ; remember that drawing handles usually update the x register
+        ; so that the next draw will be immediately to the right
+        ; for @blit this means adding 1, so this is 3 white pixels
+        ; in a row
+        mov #ffff @blit
+        mov #ffff @blit
+        mov #ffff @blit
+
+        add &a 1 &a ; move this 'star' over 1 pixel
+
+        ; if it's gone off the right side of the screen, move it back
+        sub @resx &a t
+        bnd t #8000 t  ; you can bitwise and the sign bit to test a<b
+        fjp no_pos_reset
+            mov -3 &a
+        mrk no_pos_reset
+
+        add a 1 a
+        sub a 40 t
+    tjp drawlines
+
+    nxt ; hand off this frame to the renderer
+jmp gameloop

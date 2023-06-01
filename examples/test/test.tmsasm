@@ -1,43 +1,23 @@
 mov 60 @fps
 
-mrk setuploop
-    mod @rng @resx &a
-add a 1 a
-sub a 40 t
-tjp setuploop
-
 mrk gameloop
 
 mov 0 @bg
 
-mov 0 a
-mrk drawlines
-    mov &a x
-    mul a 5 y
-    add y 2 y
-    mov #ffff @blit
-    mov #ffff @blit
-    mov #ffff @blit
+mov 0 x
 
-    add @frame a t
-    bnd t b1 t
-    tjp cont_drawlines
-    add &a 1 &a
+mrk nextinput
+mov @input t
+fjp noinput
+    mov t @text
+    jmp nextinput
+mrk noinput
 
-    sub @resx &a t
-    bnd t #8000 t
-    fjp cont_drawlines
-    mov -3 &a
-
-mrk cont_drawlines
-add a 1 a
-sub a 40 t
-tjp drawlines
 
 mov @minput t
-fjp noinput
-prn t
-mrk noinput
+fjp nominput
+    prn t
+mrk nominput
 
 nxt
 

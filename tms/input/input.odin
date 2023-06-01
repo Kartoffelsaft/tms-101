@@ -6,6 +6,7 @@ import    "core:slice"
 InputList :: struct {
     currentInputs: []rl.KeyboardKey,
     nextInputIdx: int,
+    mouseInputs: bit_set[rl.MouseButton; u16],
 }
 
 refresh_inputs :: proc(inpl: ^InputList) {
@@ -26,6 +27,11 @@ refresh_inputs :: proc(inpl: ^InputList) {
     delete(inpl.currentInputs)
     inpl.currentInputs = newInputs[:]
     inpl.nextInputIdx = 0
+
+    inpl.mouseInputs = {}
+    for i in rl.MouseButton {
+        if rl.IsMouseButtonDown(i) do incl(&inpl.mouseInputs, i)
+    }
 }
 
 next_input :: proc(inpl: ^InputList) -> (ret: rl.KeyboardKey) {

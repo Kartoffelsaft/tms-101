@@ -34,7 +34,8 @@ READ_HANDLES := map[string]ReadHandle {
     "resy" = proc() -> i16 { return cast(i16)(cast(^ctx.TmxCtx)context.user_ptr).vDisplay.texture.height },
     "fps"  = proc() -> i16 { return cast(i16)rl.GetFPS() },
     "frame" = proc() -> i16 { return transmute(i16)cast(u16)(cast(^ctx.TmxCtx)context.user_ptr).frame },
-    "input" = proc() -> i16 { return cast(i16)input.next_input(&(cast(^ctx.TmxCtx)context.user_ptr).inputlist) }
+    "input" = proc() -> i16 { return cast(i16)input.next_input(&(cast(^ctx.TmxCtx)context.user_ptr).inputlist) },
+    "minput" = proc() -> i16 { return transmute(i16)(cast(^ctx.TmxCtx)context.user_ptr).inputlist.mouseInputs },
 }
 WRITE_HANDLES := map[string]proc(i16) {
     "rng"  = proc(x: i16) { rand.set_global_seed(cast(u64)x) },

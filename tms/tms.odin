@@ -15,6 +15,7 @@ import    "asmcomp/program"
 import    "asmcomp/program/prgrunner"
 import    "ctx"
 import    "pconf"
+import    "input"
 
 DEFAULT_FONT := #load("../bswf.png")
 
@@ -57,6 +58,8 @@ _main :: proc() {
     defer ctx.delete_tmxctx(uctx^)
     
     for !rl.WindowShouldClose() {
+        input.refresh_inputs(&uctx.inputlist)
+
         rl.BeginDrawing()
         defer rl.EndDrawing()
 

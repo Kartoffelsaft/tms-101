@@ -34,6 +34,13 @@ add a 1 a
 sub a 40 t
 tjp drawlines
 
+mrk nextinput
+mov @input t
+fjp noinput
+prn t
+jmp nextinput
+mrk noinput
+
 nxt
 
 jmp gameloop

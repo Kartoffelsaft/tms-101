@@ -4,12 +4,14 @@ import    "core:math"
 import rl "vendor:raylib"
 
 import "../asmcomp/program"
+import "../input"
 
 TmxCtx :: struct {
     prg: ^program.Program,
     vDisplay: rl.RenderTexture,
     spritemap: rl.Texture,
     font: rl.Font,
+    inputlist: input.InputList,
     frame: uint,
 }
 

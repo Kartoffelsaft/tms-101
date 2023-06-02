@@ -1,0 +1,163 @@
+
+def BALL_POS_X &#ffff
+def BALL_POS_Y &#fffe
+def BALL_VEL   &#fffd
+
+bnd @rng b11 BALL_VEL
+div @resx 2 BALL_POS_X
+div @resy 2 BALL_POS_Y
+
+def P1_PADDLE_SPRITE #00
+def P2_PADDLE_SPRITE #01
+def    PADDLE_STRIDE #10
+
+def P1_POS_Y &#ffcd
+def P1_POS_X &#ffcc
+def P2_POS_Y &#ffcb
+def P2_POS_X &#ffca
+
+mov 4 P1_POS_X
+sub @resx 12 P2_POS_X
+
+def P1_UP   'W'
+def P1_DOWN 'S'
+def P2_UP   265 ; up arrow key
+def P2_DOWN 264 ; down arrow key
+
+mrk gameloop
+    ; player input
+
+    mrk next_input
+        mov @input a
+        mov a t
+        fjp no_input
+
+        sub a P1_UP t
+        tjp p1_no_up
+            sub P1_POS_Y 1 P1_POS_Y
+            bnd P1_POS_Y #8000 t
+            fjp next_input
+                mov 0 P1_POS_Y
+            jmp next_input
+        mrk p1_no_up
+
+        sub a P1_DOWN t
+        tjp p1_no_down
+            add P1_POS_Y 1 P1_POS_Y
+            sub @resy P1_POS_Y t
+            sub t 24 t
+            bnd t #8000 t
+            fjp next_input
+                sub @resy 24 P1_POS_Y
+            jmp next_input
+        mrk p1_no_down
+
+        sub a P2_UP t
+        tjp p2_no_up
+            sub P2_POS_Y 1 P2_POS_Y
+            bnd P2_POS_Y #8000 t
+            fjp next_input
+                mov 0 P2_POS_Y
+            jmp next_input
+        mrk p2_no_up
+
+        sub a P2_DOWN t
+        tjp p2_no_down
+            add P2_POS_Y 1 P2_POS_Y
+            sub @resy P2_POS_Y t
+            sub t 24 t
+            bnd t #8000 t
+            fjp next_input
+                sub @resy 24 P2_POS_Y
+            jmp next_input
+        mrk p2_no_down
+
+        prn P2_POS_Y
+    jmp next_input
+    mrk no_input
+
+
+    ; ball physics
+
+    bnd BALL_VEL 1 x
+    bnd BALL_VEL 2 y
+    shf y 1 y
+    mul x 2 x
+    sub x 1 x
+    mul y 2 y
+    sub y 1 y
+
+    add BALL_POS_X x x
+    add BALL_POS_Y y y
+    mov x BALL_POS_X
+    mov y BALL_POS_Y 
+    
+    sub x P1_POS_X t
+    sub t 8 t ; account for width of sprite
+    bnd t #8000 t
+    fjp p1_noscore
+        ; TODO: check if paddle is there
+        bnd @rng b11 BALL_VEL
+        div @resx 2 BALL_POS_X
+        div @resy 2 BALL_POS_Y
+    mrk p1_noscore
+
+    sub P2_POS_X x t
+    bnd t #8000 t
+    fjp p2_noscore
+        ; TODO: check if paddle is there
+        bnd @rng b11 BALL_VEL
+        div @resx 2 BALL_POS_X
+        div @resy 2 BALL_POS_Y
+    mrk p2_noscore
+
+    bnd y #8000 t
+    fjp no_top_bounce
+        bxr BALL_VEL 2 BALL_VEL
+    mrk no_top_bounce
+    sub y @resy t
+    bnd t #8000 t
+    tjp no_bottom_bounce
+        bxr BALL_VEL 2 BALL_VEL
+    mrk no_bottom_bounce
+
+    ; Drawing
+
+    mov 0 @bg
+
+    mov BALL_POS_X x
+    mov BALL_POS_Y y
+    mov #ffff @blit
+
+    mov P1_PADDLE_SPRITE a
+    mov P1_POS_X x
+    mov P1_POS_Y y
+
+    mov a @draw
+    add PADDLE_STRIDE a a
+    sub x 8 x
+    add y 8 y
+    mov a @draw
+    add PADDLE_STRIDE a a
+    sub x 8 x
+    add y 8 y
+    mov a @draw
+
+
+    mov P2_PADDLE_SPRITE a
+    mov P2_POS_X x
+    mov P2_POS_Y y
+
+    mov a @draw
+    add PADDLE_STRIDE a a
+    sub x 8 x
+    add y 8 y
+    mov a @draw
+    add PADDLE_STRIDE a a
+    sub x 8 x
+    add y 8 y
+    mov a @draw
+
+
+    nxt
+jmp gameloop

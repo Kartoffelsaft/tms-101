@@ -398,7 +398,9 @@ parse_instructions_tok :: proc(instructions: []tokenizer.Instruction_Tokenized) 
     for instr, i in unmarked {
         for tk, j in instr.tokens { 
             if idn, isIdn := tk.(tokenizer.Idn); isIdn {
-                instr.tokens[j] = defmap[idn.val] if idn.val in defmap else idn
+                if idn.val in defmap {
+                    instr.tokens[j] = tokenizer.clone_token(defmap[idn.val])
+                }
             }
         }
 

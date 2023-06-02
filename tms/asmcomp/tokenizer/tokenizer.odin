@@ -207,10 +207,19 @@ delete_instructions_tok :: proc(instrs: []Instruction_Tokenized) {
     delete(instrs)
 }
 
-delete_token :: proc(instr: Token) {
-    #partial switch i in instr {
+delete_token :: proc(tok: Token) {
+    #partial switch i in tok {
         case Ref: 
             delete_token(i.val^)
             free(i.val)
     }
+}
+
+clone_token :: proc(tok: Token) -> (ret: Token) {
+    ret = tok
+    #partial switch i in tok {
+        case Ref: 
+            ret = Ref{new_clone(i.val^)}
+    }
+    return
 }

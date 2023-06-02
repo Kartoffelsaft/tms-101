@@ -68,40 +68,63 @@ token_as_printable :: proc(tk: tokenizer.Token) -> (program.Printable, bool) {
 }
 
 
-extract_marks :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (unmarked: []tokenizer.Instruction_Tokenized, marks: map[string]int, ok: bool) {
+extract_nonoperators :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (unmarked: []tokenizer.Instruction_Tokenized, marks: map[string]int, defs: map[string]tokenizer.Token, ok: bool) {
     unmarkedDyn := make([dynamic]tokenizer.Instruction_Tokenized, 0, len(instructions))
     marks = make(map[string]int)
+    defs = make(map[string]tokenizer.Token)
     ok = true
 
     instrIdx := 0
 
     for instr in instructions {
-        if _, isMark := instr.tokens[0].(tokenizer.Mrk); isMark {
-            tkC := len(instr.tokens)
-            // would be a switch but you can't initialize variables in a case
+        #partial switch _ in instr.tokens[0] {
+            case tokenizer.Mrk:
+                tkC := len(instr.tokens)
+                // would be a switch but you can't initialize variables in a case
 
-            if tkC == 1 { 
-                log.errorf("Error: Mark on line %d does not have a label", instr.lineNum)
+                if tkC != 2 { 
+                    log.errorf("Mark on line %d has wrong number of args", instr.lineNum)
+                    delete(unmarkedDyn)
+                    delete(marks)
+                    delete(defs)
+                    return nil, nil, nil, false
+                }
+                identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
+                if !argIsId {
+                    log.errorf("Mark on line %d has wrong argument type", instr.lineNum)
+                    delete(unmarkedDyn)
+                    delete(marks)
+                    delete(defs)
+                    return nil, nil, nil, false
+                }
+
+                marks[identifier.val] = instrIdx
                 continue
-            } 
-            identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
-            if !argIsId {
-                log.errorf("Mark on line %d has wrong argument type", instr.lineNum)
-                delete(unmarkedDyn)
-                delete(marks)
-                return nil, nil, false
-            }
 
-            if tkC > 2 {
-                log.warnf("Mark on line %d has extra arguments, using first arg", instr.lineNum) 
-            }
+            case tokenizer.Def:
+                tkC := len(instr.tokens)
 
-            marks[identifier.val] = instrIdx
-            instrIdx -= 1
-        } else {
-            append(&unmarkedDyn, instr)
+                if tkC != 3 {
+                    log.errorf("Def on line %d has wrong number of arguments", instr.lineNum)
+                    delete(unmarkedDyn)
+                    delete(marks)
+                    delete(defs)
+                    return nil, nil, nil, false
+                }
+                identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
+                if !argIsId {
+                    log.errorf("Def on line %d has wrong argument type (not an identifier)", instr.lineNum)
+                    delete(unmarkedDyn)
+                    delete(marks)
+                    delete(defs)
+                    return nil, nil, nil, false
+                }
+
+                defs[identifier.val] = instr.tokens[2]
+
+                continue
         }
-
+        append(&unmarkedDyn, instr)
         instrIdx += 1
     }
 
@@ -348,16 +371,18 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
         case tokenizer.Str : log.errorf("invalid instruction on line %d", instr.lineNum); return nil, false
         case tokenizer.Hdl : log.errorf("invalid instruction on line %d", instr.lineNum); return nil, false
         case tokenizer.Mrk : log.errorf("invalid instruction on line %d", instr.lineNum); return nil, false
+        case tokenizer.Def : log.errorf("invalid instruction on line %d", instr.lineNum); return nil, false
     }
 
     return nil, false
 }
 
 parse_instructions_tok :: proc(instructions: []tokenizer.Instruction_Tokenized) -> ([]program.Instruction, bool) {
-    unmarked, markmap, okExtract := extract_marks(instructions)
+    unmarked, markmap, defmap, okExtract := extract_nonoperators(instructions)
     if !okExtract do return nil, false
     defer delete(unmarked)
     defer delete(markmap)
+    defer delete(defmap)
     
     if context.logger.lowest_level <= log.Level.Info do fmt.println()
     for instr, i in unmarked {
@@ -371,6 +396,12 @@ parse_instructions_tok :: proc(instructions: []tokenizer.Instruction_Tokenized) 
 
     parsed := make([]program.Instruction, len(unmarked))
     for instr, i in unmarked {
+        for tk, j in instr.tokens { 
+            if idn, isIdn := tk.(tokenizer.Idn); isIdn {
+                instr.tokens[j] = defmap[idn.val] if idn.val in defmap else idn
+            }
+        }
+
         ok := false
         parsed[i], ok = parse_instruction(instr, markmap)
         if !ok {

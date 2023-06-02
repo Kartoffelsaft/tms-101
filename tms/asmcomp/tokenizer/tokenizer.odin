@@ -21,6 +21,7 @@ Shf     :: struct{}
 Prn     :: struct{}
 
 Mrk     :: struct{}
+Def     :: struct{}
 Jmp     :: struct{}
 Fjp     :: struct{}
 Tjp     :: struct{}
@@ -56,6 +57,7 @@ Token :: union {
     Prn,
 
     Mrk,
+    Def,
     Jmp,
     Fjp,
     Tjp,
@@ -114,6 +116,7 @@ tokenize :: proc(s: string) -> (Token, bool) {
         case "prn"        : return Prn{}, true
 
         case "mrk"        : return Mrk{}, true 
+        case "def"        : return Def{}, true
         case "jmp"        : return Jmp{}, true
         case "fjp"        : return Fjp{}, true
         case "tjp"        : return Tjp{}, true

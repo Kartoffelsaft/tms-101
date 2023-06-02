@@ -1,10 +1,12 @@
 mov 60 @fps
 
+def START_OF_ROM #8000
+
 mrk gameloop
 
     mov 0 @bg
     mov 0 x
-    mov #8000 @rom
+    mov START_OF_ROM @rom
 
     mrk nextinput
         mov @rom t

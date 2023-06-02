@@ -15,6 +15,7 @@ import    "asmcomp/program"
 import    "asmcomp/program/prgrunner"
 import    "ctx"
 import    "pconf"
+import    "rom"
 import    "input"
 
 DEFAULT_FONT := #load("../bswf.png")
@@ -37,6 +38,7 @@ init :: proc() -> (uctx: ^ctx.TmxCtx) {
     log.info("compile took", time.stopwatch_duration(compStopwatch))
 
     uctx.prg = prg
+    uctx.rom = rom.load_rom_from_filename(conf.romfile)
 
     rl.InitWindow(800, 600, "tms-101")
 

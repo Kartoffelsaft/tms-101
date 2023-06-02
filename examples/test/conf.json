@@ -1,6 +1,7 @@
 {
     "asmfile": "test.tmsasm",
     "spritemapfile": "spritemaptest.png",
+    "romfile": "data.binrom",
     "resx": 180,
     "resy": 100
 }

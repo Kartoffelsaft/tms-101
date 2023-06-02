@@ -2,23 +2,23 @@ mov 60 @fps
 
 mrk gameloop
 
-mov 0 @bg
+    mov 0 @bg
+    mov 0 x
+    mov #8000 @rom
 
-mov 0 x
-
-mrk nextinput
-mov @input t
-fjp noinput
-    mov t @text
+    mrk nextinput
+        mov @rom t
+        fjp noinput
+        mov t @text
     jmp nextinput
-mrk noinput
+    mrk noinput
 
 
-mov @minput t
-fjp nominput
-    prn t
-mrk nominput
+    mov @minput t
+    fjp nominput
+        prn t
+    mrk nominput
 
-nxt
+    nxt
 
 jmp gameloop

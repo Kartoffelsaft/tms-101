@@ -8,6 +8,7 @@ import "core:strings"
 ProgramConfig :: struct {
     asmfile: string,
     spritemapfile: string,
+    romfile: string,
     resx: i32,
     resy: i32,
 }
@@ -42,6 +43,7 @@ load_program_config :: proc() -> (ProgramConfig, bool) {
     return ProgramConfig{
         asmfile = strings.concatenate({confdir, confroot["asmfile"].(json.String) or_else "src.tmsasm"}),
         spritemapfile = strings.concatenate({confdir, confroot["spritemapfile"].(json.String) or_else "spritemap.png"}),
+        romfile = strings.concatenate({confdir, confroot["romfile"].(json.String) or_else "data.csvrom"}),
         resx = cast(i32)(confroot["resx"].(json.Integer) or_else cast(i64)(confroot["resx"].(json.Float) or_else 120)),
         resy = cast(i32)(confroot["resx"].(json.Integer) or_else cast(i64)(confroot["resy"].(json.Float) or_else 120)),
     }, true

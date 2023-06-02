@@ -5,10 +5,12 @@ import rl "vendor:raylib"
 
 import "../asmcomp/program"
 import "../input"
+import "../rom"
 
 TmxCtx :: struct {
     prg: ^program.Program,
     vDisplay: rl.RenderTexture,
+    rom: rom.Rom,
     spritemap: rl.Texture,
     font: rl.Font,
     inputlist: input.InputList,

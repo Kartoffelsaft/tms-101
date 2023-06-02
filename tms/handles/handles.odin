@@ -2,11 +2,13 @@ package handles
 
 import    "core:log"
 import    "core:math/rand"
+import    "core:math"
 import    "core:slice"
 import rl "vendor:raylib"
 
 import "../ctx"
 import "../input"
+import "../rom"
 
 ReadHandle :: #type proc() -> i16
 WriteHandle :: #type proc(i16)
@@ -30,12 +32,16 @@ READ_HANDLES := map[string]ReadHandle {
         pos, scale := ctx.get_virtual_display_pos_scale()
         return cast(i16)((rl.GetMouseY() - cast(i32)pos.y)/scale)
     },
-    "resx" = proc() -> i16 { return cast(i16)(cast(^ctx.TmxCtx)context.user_ptr).vDisplay.texture.width },
-    "resy" = proc() -> i16 { return cast(i16)(cast(^ctx.TmxCtx)context.user_ptr).vDisplay.texture.height },
-    "fps"  = proc() -> i16 { return cast(i16)rl.GetFPS() },
-    "frame" = proc() -> i16 { return transmute(i16)cast(u16)(cast(^ctx.TmxCtx)context.user_ptr).frame },
-    "input" = proc() -> i16 { return cast(i16)input.next_input(&(cast(^ctx.TmxCtx)context.user_ptr).inputlist) },
+    "resx"   = proc() -> i16 { return cast(i16)(cast(^ctx.TmxCtx)context.user_ptr).vDisplay.texture.width },
+    "resy"   = proc() -> i16 { return cast(i16)(cast(^ctx.TmxCtx)context.user_ptr).vDisplay.texture.height },
+    "fps"    = proc() -> i16 { return cast(i16)rl.GetFPS() },
+    "frame"  = proc() -> i16 { return transmute(i16)cast(u16)(cast(^ctx.TmxCtx)context.user_ptr).frame },
+    "input"  = proc() -> i16 { return cast(i16)input.next_input(&(cast(^ctx.TmxCtx)context.user_ptr).inputlist) },
     "minput" = proc() -> i16 { return transmute(i16)(cast(^ctx.TmxCtx)context.user_ptr).inputlist.mouseInputs },
+    "rom"    = proc() -> i16 {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        return rom.read_rom(&ctx.rom)
+    },
 }
 WRITE_HANDLES := map[string]proc(i16) {
     "rng"  = proc(x: i16) { rand.set_global_seed(cast(u64)x) },
@@ -73,4 +79,12 @@ WRITE_HANDLES := map[string]proc(i16) {
         ctx.prg.regx += charwidth
     },
     "fps"  = proc(x: i16) { rl.SetTargetFPS(cast(i32)x) },
+    "rom"    = proc(x: i16) {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        switch transmute(u16)x {
+            case 0x8000: ctx.rom.readIndex = 0
+            case 0x7fff: ctx.rom.readIndex = len(ctx.rom.data)
+            case: ctx.rom.readIndex += math.clamp(cast(int)x, 0, len(ctx.rom.data))
+        }
+    },
 }

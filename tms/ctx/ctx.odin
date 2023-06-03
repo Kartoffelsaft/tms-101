@@ -15,6 +15,7 @@ TmxCtx :: struct {
     font: rl.Font,
     inputlist: input.InputList,
     frame: uint,
+    textColor: rl.Color,
 }
 
 get_virtual_display_pos_scale :: proc(vdisp := (cast(^TmxCtx)context.user_ptr).vDisplay) -> (pos: rl.Vector2, scale: i32) {

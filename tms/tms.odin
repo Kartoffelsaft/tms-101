@@ -26,6 +26,7 @@ init :: proc() -> (uctx: ^ctx.TmxCtx) {
     defer pconf.delete_program_config(conf)
 
     uctx = new(ctx.TmxCtx)
+    uctx.textColor = rl.WHITE
 
     compStopwatch := time.Stopwatch{}
     time.stopwatch_start(&compStopwatch)

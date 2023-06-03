@@ -49,6 +49,7 @@ WRITE_HANDLES := map[string]proc(i16) {
     "rng"  = proc(x: i16) { rand.set_global_seed(cast(u64)x) },
     "void" = proc(x: i16) {},
     "bg"   = proc(x: i16) { rl.ClearBackground(writehandle_to_color(x)) },
+    "tcol" = proc(x: i16) { (cast(^ctx.TmxCtx)context.user_ptr).textColor = writehandle_to_color(x) },
     "draw" = proc(x: i16) {
         ctx := cast(^ctx.TmxCtx)context.user_ptr
         rl.DrawTexturePro(
@@ -75,7 +76,7 @@ WRITE_HANDLES := map[string]proc(i16) {
     "dtxt"  = proc(x: i16) {
         ctx := cast(^ctx.TmxCtx)context.user_ptr
         char := cast(u8)(x & 0xff)
-        rl.DrawTextCodepoint(ctx.font, cast(rune)char, {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, rl.WHITE)
+        rl.DrawTextCodepoint(ctx.font, cast(rune)char, {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, ctx.textColor)
         charwidth := cast(i16)rl.GetGlyphAtlasRec(ctx.font, cast(rune)char).width + 1 // +1 for padding
         log.debugf("character %c has width %d", char, charwidth)
         ctx.prg.regx += charwidth
@@ -85,7 +86,7 @@ WRITE_HANDLES := map[string]proc(i16) {
         buf := [7]byte{} // -32768 + null terminator
         str := strconv.itoa(buf[:], cast(int)x)
         width := cast(i16)rl.MeasureTextEx(ctx.font, strings.unsafe_string_to_cstring(str), 6, 1).x + 1
-        rl.DrawTextEx(ctx.font, strings.unsafe_string_to_cstring(str), {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, 1, rl.WHITE)
+        rl.DrawTextEx(ctx.font, strings.unsafe_string_to_cstring(str), {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, 1, ctx.textColor)
         ctx.prg.regx += width
     },
     "fps"  = proc(x: i16) { rl.SetTargetFPS(cast(i32)x) },

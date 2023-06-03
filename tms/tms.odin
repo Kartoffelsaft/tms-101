@@ -97,6 +97,8 @@ main :: proc() {
 
     _main()
 
+    prgrunner.print_program_benchmark()
+
     log.destroy_console_logger(context.logger)
 
     for _, leak in trackalloc.allocation_map {

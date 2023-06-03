@@ -4,8 +4,29 @@ import   "core:fmt"
 import p ".."
 import   "../../../ctx"
 
+when #config(BENCHMARK, false) {
+    import "core:time"
+    import "core:log"
+
+    Benchmarker :: struct {
+        timer: time.Stopwatch,
+        instructions: u128,
+    }
+
+    bm := Benchmarker{{}, 0}
+}
+
+
 run_program :: proc() {
+    when #defined(bm) do time.stopwatch_start(&bm.timer)
     for step_program() {}
+    when #defined(bm) do time.stopwatch_stop(&bm.timer)
+}
+
+print_program_benchmark :: proc() {
+    when #defined(bm) {
+        log.infof("%d instructions in %v seconds", bm.instructions, time.duration_seconds(time.stopwatch_duration(bm.timer)))
+    }
 }
 
 @(private)
@@ -35,6 +56,7 @@ step_program :: proc(prg := (cast(^ctx.TmxCtx)context.user_ptr).prg) -> bool #no
     }
 
     prg.instructionIdx += 1
+    when #defined(bm) do bm.instructions += 1
 
     return true
 }

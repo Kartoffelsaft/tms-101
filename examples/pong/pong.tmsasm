@@ -7,6 +7,7 @@ bnd @rng b11 BALL_VEL
 div @resx 2 BALL_POS_X
 div @resy 2 BALL_POS_Y
 
+def NET_SPRITE #02
 def P1_PADDLE_SPRITE #00
 def P2_PADDLE_SPRITE #01
 def    PADDLE_STRIDE #10
@@ -15,6 +16,9 @@ def P1_POS_Y &#ffcd
 def P1_POS_X &#ffcc
 def P2_POS_Y &#ffcb
 def P2_POS_X &#ffca
+
+def P1_SCORE &#ffc9
+def P2_SCORE &#ffc8
 
 mov 4 P1_POS_X
 sub @resx 12 P2_POS_X
@@ -95,21 +99,67 @@ mrk gameloop
     sub x P1_POS_X t
     sub t 8 t ; account for width of sprite
     bnd t #8000 t
-    fjp p1_noscore
-        ; TODO: check if paddle is there
-        bnd @rng b11 BALL_VEL
-        div @resx 2 BALL_POS_X
-        div @resy 2 BALL_POS_Y
-    mrk p1_noscore
+    fjp noscoreon_p1
+        sub y P1_POS_Y t
+        bnd t #8000 t
+        tjp scoreon_p1
+
+        sub P1_POS_Y y t
+        add t 24 t
+        bnd t #8000 t
+        tjp scoreon_p1
+
+            bnd @rng 1 b
+            shf b -1 b
+            bxr BALL_VEL b BALL_VEL
+            bxr BALL_VEL 1 BALL_VEL
+            jmp noscoreon_p1
+
+        mrk scoreon_p1
+            add P2_SCORE 1 P2_SCORE
+            prn "_________"
+            prn "P1 score:"
+            prn P1_SCORE
+            prn "P2 score:"
+            prn P2_SCORE
+
+            ; reset ball
+            bnd @rng b11 BALL_VEL
+            div @resx 2 BALL_POS_X
+            div @resy 2 BALL_POS_Y
+    mrk noscoreon_p1
 
     sub P2_POS_X x t
     bnd t #8000 t
-    fjp p2_noscore
-        ; TODO: check if paddle is there
-        bnd @rng b11 BALL_VEL
-        div @resx 2 BALL_POS_X
-        div @resy 2 BALL_POS_Y
-    mrk p2_noscore
+    fjp noscoreon_p2
+        sub y P2_POS_Y t
+        bnd t #8000 t
+        tjp scoreon_p2
+
+        sub P2_POS_Y y t
+        add t 24 t
+        bnd t #8000 t
+        tjp scoreon_p2
+
+            bnd @rng 1 b
+            shf b -1 b
+            bxr BALL_VEL b BALL_VEL
+            bxr BALL_VEL 1 BALL_VEL
+            jmp noscoreon_p2
+
+        mrk scoreon_p2
+            add P1_SCORE 1 P1_SCORE
+            prn "_________"
+            prn "P1 score:"
+            prn P1_SCORE
+            prn "P2 score:"
+            prn P2_SCORE
+
+            ; reset ball
+            bnd @rng b11 BALL_VEL
+            div @resx 2 BALL_POS_X
+            div @resy 2 BALL_POS_Y
+    mrk noscoreon_p2
 
     bnd y #8000 t
     fjp no_top_bounce
@@ -123,7 +173,18 @@ mrk gameloop
 
     ; Drawing
 
-    mov 0 @bg
+    mov b00001_000010_00001 @bg
+
+    div @resx 2 x
+    sub x 4 x
+    mov 0 y
+
+    mrk next_net
+        mov NET_SPRITE @draw
+        sub x 8 x
+        add y 8 y
+        sub y @resy t
+    tjp next_net
 
     mov BALL_POS_X x
     mov BALL_POS_Y y

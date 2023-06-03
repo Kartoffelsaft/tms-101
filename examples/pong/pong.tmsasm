@@ -117,11 +117,6 @@ mrk gameloop
 
         mrk scoreon_p1
             add P2_SCORE 1 P2_SCORE
-            prn "_________"
-            prn "P1 score:"
-            prn P1_SCORE
-            prn "P2 score:"
-            prn P2_SCORE
 
             ; reset ball
             bnd @rng b11 BALL_VEL
@@ -149,11 +144,6 @@ mrk gameloop
 
         mrk scoreon_p2
             add P1_SCORE 1 P1_SCORE
-            prn "_________"
-            prn "P1 score:"
-            prn P1_SCORE
-            prn "P2 score:"
-            prn P2_SCORE
 
             ; reset ball
             bnd @rng b11 BALL_VEL
@@ -185,6 +175,20 @@ mrk gameloop
         add y 8 y
         sub y @resy t
     tjp next_net
+
+
+    mov 1 y
+    div @resx 4 x
+    sub x 3 x
+    mov b11111_000000_00000 @tcol
+    mov P1_SCORE @dnum
+
+    div @resx 4 x
+    mul x 3 x
+    sub x 3 x
+    mov b00000_000000_11111 @tcol
+    mov P2_SCORE @dnum
+
 
     mov BALL_POS_X x
     mov BALL_POS_Y y

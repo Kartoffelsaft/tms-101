@@ -22,9 +22,9 @@ get_virtual_display_pos_scale :: proc(vdisp := (cast(^TmxCtx)context.user_ptr).v
     scale = math.max(1, math.min(rl.GetScreenWidth() / vdisp.texture.width, rl.GetScreenHeight() / vdisp.texture.height))
     
     pos = rl.Vector2{
-        cast(f32)(rl.GetScreenWidth () - scale * vdisp.texture.width ),
-        cast(f32)(rl.GetScreenHeight() - scale * vdisp.texture.height),
-    } * 0.5
+        cast(f32)((rl.GetScreenWidth () - scale * vdisp.texture.width ) / 2),
+        cast(f32)((rl.GetScreenHeight() - scale * vdisp.texture.height) / 2),
+    }
 
     return
 }

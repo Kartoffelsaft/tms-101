@@ -6,15 +6,22 @@ mrk gameloop
 
     mov 0 @bg
     mov 0 x
+    mov 0 y
     mov START_OF_ROM @rom
 
     mrk nextinput
         mov @rom t
         fjp noinput
-        mov t @text
+        mov t @dtxt
     jmp nextinput
     mrk noinput
 
+    mov 0 x
+    mov 10 y
+    mov #8000 @dnum
+    mov 'L' @dtxt
+    mov 'o' @dtxt
+    mov 'l' @dtxt
 
     mov @minput t
     fjp nominput

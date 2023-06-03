@@ -4,6 +4,8 @@ import    "core:log"
 import    "core:math/rand"
 import    "core:math"
 import    "core:slice"
+import    "core:strconv"
+import    "core:strings"
 import rl "vendor:raylib"
 
 import "../ctx"
@@ -70,13 +72,21 @@ WRITE_HANDLES := map[string]proc(i16) {
         rl.DrawRectangle(cast(i32)ctx.prg.regx, cast(i32)ctx.prg.regy, 8, 8, writehandle_to_color(x))
         ctx.prg.regx += 8
     },
-    "text"  = proc(x: i16) {
+    "dtxt"  = proc(x: i16) {
         ctx := cast(^ctx.TmxCtx)context.user_ptr
         char := cast(u8)(x & 0xff)
         rl.DrawTextCodepoint(ctx.font, cast(rune)char, {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, rl.WHITE)
         charwidth := cast(i16)rl.GetGlyphAtlasRec(ctx.font, cast(rune)char).width + 1 // +1 for padding
         log.debugf("character %c has width %d", char, charwidth)
         ctx.prg.regx += charwidth
+    },
+    "dnum"  = proc(x: i16) {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        buf := [7]byte{} // -32768 + null terminator
+        str := strconv.itoa(buf[:], cast(int)x)
+        width := cast(i16)rl.MeasureTextEx(ctx.font, strings.unsafe_string_to_cstring(str), 6, 1).x + 1
+        rl.DrawTextEx(ctx.font, strings.unsafe_string_to_cstring(str), {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, 1, rl.WHITE)
+        ctx.prg.regx += width
     },
     "fps"  = proc(x: i16) { rl.SetTargetFPS(cast(i32)x) },
     "rom"    = proc(x: i16) {

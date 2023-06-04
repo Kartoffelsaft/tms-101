@@ -52,4 +52,5 @@ load_program_config :: proc() -> (ProgramConfig, bool) {
 delete_program_config :: proc(cfg: ProgramConfig) {
     delete(cfg.asmfile)
     delete(cfg.spritemapfile)
+    delete(cfg.romfile)
 }

@@ -122,7 +122,10 @@ delete_program :: proc(prg: Program) {
     for instr in prg.instructions {
         #partial switch i in instr {
             case Prn:
-                if s, isS := i.val.(Str); isS do delete(s.val)
+                switch p in i.val {
+                    case Str: delete(p.val)
+                    case ReadVal: delete_ref(p)
+                }
 
             // again with the whole DRY principle; I can think of ways to not repeat
             // myself but I'm not doing it because you wouldn't understand what you're

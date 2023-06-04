@@ -46,7 +46,9 @@ init :: proc() -> (uctx: ^ctx.TmxCtx) {
     rl.SetTargetFPS(60)
 
     uctx.vDisplay = rl.LoadRenderTexture(cast(i32)conf.resx, cast(i32)conf.resy)
-    uctx.spritemap = rl.LoadTexture(strings.clone_to_cstring(conf.spritemapfile))
+    cspritemapfile := strings.clone_to_cstring(conf.spritemapfile)
+    defer delete(cspritemapfile)
+    uctx.spritemap = rl.LoadTexture(cspritemapfile)
     uctx.font = rl.LoadFontFromImage(rl.LoadImageFromMemory(".png", slice.as_ptr(DEFAULT_FONT), cast(i32)len(DEFAULT_FONT)), rl.MAGENTA, ' ')
 
     return uctx

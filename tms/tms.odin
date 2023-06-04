@@ -78,6 +78,8 @@ _main :: proc() {
             prgrunner.run_program()
         }
 
+        if rl.IsKeyPressed(rl.KeyboardKey.F10) do save_screencap()
+
         pos, scale := ctx.get_virtual_display_pos_scale()
         rl.DrawTexturePro(
             uctx.vDisplay.texture,
@@ -112,4 +114,20 @@ main :: proc() {
     for badFree in trackalloc.bad_free_array {
         log.warnf("bad free at %v", badFree.location)
     }
+}
+
+save_screencap :: proc(ctx := cast(^ctx.TmxCtx)context.user_ptr) {
+    Y, M, D := time.date(time.now())
+    h, m, s := time.clock_from_time(time.now())
+
+    filename : strings.Builder = strings.builder_make()
+    defer strings.builder_destroy(&filename)
+    fmt.sbprintf(&filename, "screencap_%d_%d_%d_%d_%d_%d.png\x00", Y, M, D, h, m, s)
+
+    screencap := rl.LoadImageFromTexture(ctx.vDisplay.texture)
+    defer rl.UnloadImage(screencap)
+
+    rl.ImageFlipVertical(&screencap)
+
+    rl.ExportImage(screencap, strings.unsafe_string_to_cstring(string(filename.buf[:])))
 }

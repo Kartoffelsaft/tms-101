@@ -1,6 +1,19 @@
+; Pong
+;
+; Player 1 is controlled with W and S
+; Player 2 is controlled with arrow keys
+;
+
+; Memory layout:
+;
+; #0000 .. #ffcf: unused
+; #ffd0 .. #ffdf: player data
+; #fff0 .. #ffff: ball data
 
 def BALL_POS_X &#ffff
 def BALL_POS_Y &#fffe
+; BALL_VEL contains both horizontal and vertical velocity info
+; 00 -> up-left, 01 -> up-right, 10 -> down-left, -> 11 down-right
 def BALL_VEL   &#fffd
 
 bnd @rng b11 BALL_VEL
@@ -12,13 +25,13 @@ def P1_PADDLE_SPRITE #00
 def P2_PADDLE_SPRITE #01
 def    PADDLE_STRIDE #10
 
-def P1_POS_Y &#ffcd
-def P1_POS_X &#ffcc
-def P2_POS_Y &#ffcb
-def P2_POS_X &#ffca
+def P1_POS_Y &#ffdd
+def P1_POS_X &#ffdc
+def P2_POS_Y &#ffdb
+def P2_POS_X &#ffda
 
-def P1_SCORE &#ffc9
-def P2_SCORE &#ffc8
+def P1_SCORE &#ffd9
+def P2_SCORE &#ffd8
 
 mov 4 P1_POS_X
 sub @resx 12 P2_POS_X
@@ -34,11 +47,14 @@ mrk gameloop
     mrk next_input
         mov @input a
         mov a t
-        fjp no_input
+        fjp no_input ; @input starts to evaluate to 0 when there is no input
 
+        ; subtraction is useful for checking equality
         sub a P1_UP t
         tjp p1_no_up
             sub P1_POS_Y 1 P1_POS_Y
+
+            ; How to test if a number (P1_POS_Y in this case) is <0
             bnd P1_POS_Y #8000 t
             fjp next_input
                 mov 0 P1_POS_Y
@@ -48,6 +64,8 @@ mrk gameloop
         sub a P1_DOWN t
         tjp p1_no_down
             add P1_POS_Y 1 P1_POS_Y
+
+            ; Test if P1_POS_Y <= resx + 24 (pixel height of paddle)
             sub @resy P1_POS_Y t
             sub t 24 t
             bnd t #8000 t
@@ -109,6 +127,7 @@ mrk gameloop
         bnd t #8000 t
         tjp scoreon_p1
 
+            ; bounce ball
             bnd @rng 1 b
             shf b -1 b
             bxr BALL_VEL b BALL_VEL
@@ -136,6 +155,7 @@ mrk gameloop
         bnd t #8000 t
         tjp scoreon_p2
 
+            ; bounce ball
             bnd @rng 1 b
             shf b -1 b
             bxr BALL_VEL b BALL_VEL
@@ -163,20 +183,22 @@ mrk gameloop
 
     ; Drawing
 
+    ; Dark gray background
     mov b00001_000010_00001 @bg
 
+    ; Net
     div @resx 2 x
     sub x 4 x
     mov 0 y
 
     mrk next_net
         mov NET_SPRITE @draw
-        sub x 8 x
+        sub x 8 x ; When drawing vertically you need to cancel out the automatic x movements
         add y 8 y
         sub y @resy t
     tjp next_net
 
-
+    ; Scores
     mov 1 y
     div @resx 4 x
     sub x 3 x
@@ -189,11 +211,12 @@ mrk gameloop
     mov b00000_000000_11111 @tcol
     mov P2_SCORE @dnum
 
-
+    ; Ball
     mov BALL_POS_X x
     mov BALL_POS_Y y
     mov #ffff @blit
 
+    ; Player paddles
     mov P1_PADDLE_SPRITE a
     mov P1_POS_X x
     mov P1_POS_Y y

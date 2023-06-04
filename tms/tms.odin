@@ -27,6 +27,8 @@ init :: proc() -> (uctx: ^ctx.TmxCtx) {
 
     uctx = new(ctx.TmxCtx)
     uctx.textColor = rl.WHITE
+    uctx.drawScale = 8
+    uctx.drawRotation = 0
 
     compStopwatch := time.Stopwatch{}
     time.stopwatch_start(&compStopwatch)

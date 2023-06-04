@@ -55,9 +55,9 @@ WRITE_HANDLES := map[string]proc(i16) {
         rl.DrawTexturePro(
             ctx.spritemap,
             {cast(f32)((x & 0xf) << 3), cast(f32)((x & 0xf0) >> 1), 8, 8},
-            {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy  , 8, 8},
+            {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy, cast(f32)ctx.drawScale, cast(f32)ctx.drawScale},
             {0, 0},
-            0,
+            ctx.drawRotation,
             rl.WHITE,
         )
         ctx.prg.regx += 8
@@ -68,9 +68,15 @@ WRITE_HANDLES := map[string]proc(i16) {
         rl.DrawPixel(cast(i32)ctx.prg.regx, cast(i32)ctx.prg.regy, writehandle_to_color(x))
         ctx.prg.regx += 1
     },
-    "fbox" = proc(x: i16) {
+    "dbox" = proc(x: i16) {
         ctx := cast(^ctx.TmxCtx)context.user_ptr
-        rl.DrawRectangle(cast(i32)ctx.prg.regx, cast(i32)ctx.prg.regy, 8, 8, writehandle_to_color(x))
+        log.debugf("rotation is %f", ctx.drawRotation)
+        rl.DrawRectanglePro({
+            cast(f32)ctx.prg.regx, 
+            cast(f32)ctx.prg.regy, 
+            cast(f32)ctx.drawScale, 
+            cast(f32)ctx.drawScale,
+        }, {0, 0}, ctx.drawRotation, writehandle_to_color(x))
         ctx.prg.regx += 8
     },
     "dtxt"  = proc(x: i16) {
@@ -88,6 +94,14 @@ WRITE_HANDLES := map[string]proc(i16) {
         width := cast(i16)rl.MeasureTextEx(ctx.font, strings.unsafe_string_to_cstring(str), 6, 1).x + 1
         rl.DrawTextEx(ctx.font, strings.unsafe_string_to_cstring(str), {cast(f32)ctx.prg.regx, cast(f32)ctx.prg.regy}, 6, 1, ctx.textColor)
         ctx.prg.regx += width
+    },
+    "scale"  = proc(x: i16) {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        ctx.drawScale = cast(i32)x
+    },
+    "rot"  = proc(x: i16) {
+        ctx := cast(^ctx.TmxCtx)context.user_ptr
+        ctx.drawRotation = cast(f32)x * (360.0 / 0xffff)
     },
     "fps"  = proc(x: i16) { rl.SetTargetFPS(cast(i32)x) },
     "rom"    = proc(x: i16) {

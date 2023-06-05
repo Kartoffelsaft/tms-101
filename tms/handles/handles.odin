@@ -24,6 +24,13 @@ writehandle_to_color :: proc(x: i16) -> rl.Color {
     }
 }
 
+i16_to_deg :: proc(x: i16) -> f32 {
+    return cast(f32)x * (360.0 / 0xffff)
+}
+i16_to_rad :: proc(x: i16) -> f32 {
+    return cast(f32)x * (2 * math.PI / 0xffff)
+}
+
 READ_HANDLES := map[string]ReadHandle {
     "rng"    = read_rng,
     "msx"    = read_msx,
@@ -108,6 +115,7 @@ read_minput :: proc() -> i16 {
 
 read_rom :: proc() -> i16 {
     ctx := cast(^ctx.TmxCtx)context.user_ptr
+
     return rom.read_rom(&ctx.rom)
 }
 write_rom :: proc(x: i16) {
@@ -147,7 +155,12 @@ write_draw :: proc(x: i16) {
         ctx.drawRotation,
         rl.WHITE,
     )
-    ctx.prg.regx += cast(i16)ctx.drawScale
+    if ctx.drawRotation == 0 do ctx.prg.regx += cast(i16)ctx.drawScale
+    else {
+        r := ctx.drawRotationI * complex(cast(f32)ctx.drawScale, 0)
+        ctx.prg.regx += real(r)
+        ctx.prg.regy += imag(r)
+    }
 }
 
 write_blit :: proc(x: i16) {
@@ -167,7 +180,13 @@ write_dbox :: proc(x: i16) {
         cast(f32)ctx.drawScale, 
         cast(f32)ctx.drawScale,
     }, {0, 0}, ctx.drawRotation, writehandle_to_color(x))
-    ctx.prg.regx += cast(i16)ctx.drawScale
+
+    if ctx.drawRotation == 0 do ctx.prg.regx += cast(i16)ctx.drawScale
+    else {
+        r := ctx.drawRotationI * complex(cast(f32)ctx.drawScale, 0)
+        ctx.prg.regx += real(r)
+        ctx.prg.regy += imag(r)
+    }
 }
 
 write_dtxt :: proc(x: i16) {
@@ -199,5 +218,7 @@ write_scale :: proc(x: i16) {
 write_rot :: proc(x: i16) {
     ctx := cast(^ctx.TmxCtx)context.user_ptr
 
-    ctx.drawRotation = cast(f32)x * (360.0 / 0xffff)
+    ctx.drawRotation = i16_to_deg(x)
+    rad := i16_to_rad(x)
+    ctx.drawRotationI = complex(math.cos(rad), math.sin(rad))
 }

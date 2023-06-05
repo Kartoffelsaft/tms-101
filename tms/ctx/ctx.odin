@@ -18,6 +18,7 @@ TmxCtx :: struct {
     textColor: rl.Color,
     drawScale: i32,
     drawRotation: f32,
+    drawRotationI: complex32,
 }
 
 get_virtual_display_pos_scale :: proc(vdisp := (cast(^TmxCtx)context.user_ptr).vDisplay) -> (pos: rl.Vector2, scale: i32) {

@@ -32,6 +32,7 @@ mrk gameloop
     mov c @rot
     mov 24 @scale
     mov TEST_SPRITE @draw
+    mov TEST_SPRITE @draw
     add c #100 c
 
     mov @minput t

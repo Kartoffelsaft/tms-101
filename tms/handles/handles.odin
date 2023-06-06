@@ -219,6 +219,9 @@ write_rot :: proc(x: i16) {
     ctx := cast(^ctx.TmxCtx)context.user_ptr
 
     ctx.drawRotation = i16_to_deg(x)
-    rad := i16_to_rad(x)
-    ctx.drawRotationI = complex(math.cos(rad), math.sin(rad))
+
+    if x != 0 {
+        rad := i16_to_rad(x)
+        ctx.drawRotationI = complex(math.cos(rad), math.sin(rad))
+    }
 }

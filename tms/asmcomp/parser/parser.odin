@@ -177,6 +177,10 @@ extract_nonoperators :: proc(instructions: []tokenizer.Instruction_Tokenized) ->
     if !mcok do return ---, ---, ---, false
     defer delete(instructions)
     defer delete(macros)
+    defer for _, mc in macros {
+        delete(mc.instrs)
+        delete(mc.args)
+    }
 
     operatorsDyn := make([dynamic]tokenizer.Instruction_Tokenized, 0, len(instructions))
     marks = make(map[string]int)

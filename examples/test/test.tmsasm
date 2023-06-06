@@ -4,6 +4,11 @@ def START_OF_ROM #8000
 
 def TEST_SPRITE #80
 
+?TEST_MACRO ARGA ARGB
+mov ARGB @dtxt
+mov ARGA @dtxt
+/?
+
 mrk gameloop
 
     mov 0 @bg
@@ -26,6 +31,8 @@ mrk gameloop
     mov 'L' @dtxt
     mov 'o' @dtxt
     mov 'l' @dtxt
+
+    !TEST_MACRO 'm' 'n'
 
     mov @msx x
     mov @msy y

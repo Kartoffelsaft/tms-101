@@ -36,11 +36,14 @@ RegT    :: struct{}
 RegX    :: struct{}
 RegY    :: struct{}
 
-Num     :: struct{ val: i16    }
-Idn     :: struct{ val: string }
-Str     :: struct{ val: string }
-Ref     :: struct{ val: ^Token }
-Hdl     :: struct{ val: string }
+Num     :: struct{ val : i16    }
+Idn     :: struct{ name: string }
+Str     :: struct{ val : string }
+Ref     :: struct{ val : ^Token }
+Hdl     :: struct{ name: string }
+Mkb     :: struct{ name: string }
+Mki     :: struct{ name: string }
+Mke     :: struct{}
 
 Token :: union {
     Mov,
@@ -77,6 +80,9 @@ Token :: union {
     Str,
     Ref,
     Hdl,
+    Mkb,
+    Mki,
+    Mke,
 }
 
 parse_num :: proc(s: string) -> (value: i16, ok: bool) {
@@ -163,6 +169,9 @@ tokenize :: proc(s: string) -> (Token, bool) {
                     }
                     return Ref{new_clone(to)}, true
                 case s[0] == '@': return Hdl{s[1:]}, true
+                case s[0] == '?': return Mkb{s[1:]}, true
+                case s[0] == '!': return Mki{s[1:]}, true
+                case s == "/?" : return Mke{}, true
                 case: return Idn{s}, true
             }
         }

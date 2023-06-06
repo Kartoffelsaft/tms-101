@@ -100,7 +100,7 @@ main :: proc() {
     mem.tracking_allocator_init(&trackalloc, context.allocator)
     context.allocator = mem.tracking_allocator(&trackalloc)
 
-    context.logger = log.create_console_logger(log.Level.Info)
+    context.logger = log.create_console_logger(log.Level.Debug)
 
     _main()
 

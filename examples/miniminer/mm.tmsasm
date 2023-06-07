@@ -1,0 +1,105 @@
+
+mov 0 @bg
+mov 'L' @dtxt
+mov 'o' @dtxt
+mov 'a' @dtxt
+mov 'd' @dtxt
+mov 'i' @dtxt
+mov 'n' @dtxt
+mov 'g' @dtxt
+mov '.' @dtxt
+mov '.' @dtxt
+mov '.' @dtxt
+
+nxt
+
+
+
+def MAP_DATA #e000 ; 128x64 world = 8192 spaces
+def WORLD_WIDTH 128
+def WORLD_HEIGHT 64
+
+def ID_AIR      #00
+def ID_DIRT     #01
+def ID_GRASS    #02
+def ID_STONE    #03
+
+?INDEX_WORLD col row to
+; TODO: get defs working in macros
+mul row 128 to
+add to col to
+add to #e000 to
+/?
+
+mov 0 y
+mrk world_col
+    mov 0 x
+    mrk world_row
+        !INDEX_WORLD x y a
+
+        sub y 3 t
+        bnd t #8000 t
+        fjp not_air
+            mov ID_AIR &a
+            jmp gen_next_tile
+        mrk not_air
+
+        sub y 3 t
+        tjp not_grass
+            mov ID_GRASS &a
+            jmp gen_next_tile
+        mrk not_grass
+
+        sub y 4 t
+        tjp not_dirt
+            mov ID_DIRT &a
+            jmp gen_next_tile
+        mrk not_dirt
+
+        mov ID_STONE &a
+
+        mrk gen_next_tile
+        add x 1 x
+        sub x WORLD_WIDTH t
+    tjp world_row
+
+    add y 1 y
+    sub y WORLD_HEIGHT t
+tjp world_col
+
+mrk gameloop
+
+    mov b00101_011100_11100 @bg
+
+    mov 0 x
+    mov 0 y
+    mov 0 a
+    mov 0 b
+
+    !INDEX_WORLD 0 b a
+
+    mrk draw_next_tile
+        bnd &a #ff @draw
+
+        sub x @resx t
+        bnd t #8000 t
+        tjp no_new_row
+            mov 0 x
+            add y 8 y
+            add b 1 b
+            
+            sub y @resy t
+            bnd t #8000 t
+            fjp done_drawing_tiles
+
+            !INDEX_WORLD 0 b a
+        jmp draw_next_tile
+
+        mrk no_new_row
+            add a 1 a
+        jmp draw_next_tile
+
+    mrk done_drawing_tiles
+
+    nxt
+jmp gameloop

@@ -25,10 +25,9 @@ def ID_GRASS    #02
 def ID_STONE    #03
 
 ?INDEX_WORLD col row to
-; TODO: get defs working in macros
-mul row 128 to
+mul row WORLD_WIDTH to
 add to col to
-add to #e000 to
+add to MAP_DATA to
 /?
 
 mov 0 y

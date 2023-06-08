@@ -70,6 +70,7 @@ token_as_printable :: proc(tk: tokenizer.Token) -> (program.Printable, bool) {
 Macro :: struct {
     instrs: []tokenizer.Instruction_Tokenized,
     args: map[tokenizer.Idn]int,
+    locals: map[tokenizer.Idn]struct{},
 }
 
 extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
@@ -88,6 +89,7 @@ extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
     thisMacroName  : string
     thisMacroInstrs: [dynamic]tokenizer.Instruction_Tokenized
     thisMacroArgs  : map[tokenizer.Idn]int
+    thisMacroLocals: map[tokenizer.Idn]struct{}
 
     for instr in instructions {
         switch mode {
@@ -102,6 +104,7 @@ extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
                 thisMacroName   = mcb.name
                 thisMacroInstrs = make([dynamic]tokenizer.Instruction_Tokenized)
                 thisMacroArgs   = make(map[tokenizer.Idn]int, len(instr.tokens) - 1)
+                thisMacroLocals = make(map[tokenizer.Idn]struct{})
 
                 for i in 1..<len(instr.tokens) {
                     idn, isIdn := instr.tokens[i].(tokenizer.Idn)
@@ -117,17 +120,26 @@ extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
                 mce, ismce := instr.tokens[0].(tokenizer.Mke)
                 if !ismce {
                     append(&thisMacroInstrs, instr) 
+
+                    localDef, _, isDef := parse_def(instr)
+                    if isDef do thisMacroLocals[localDef] = ---
+
+                    localMrk, isMrk := parse_mark(instr)
+                    if isMrk do thisMacroLocals[localMrk] = ---
+                    
                     continue
                 }
 
                 macros[thisMacroName] = {
                     thisMacroInstrs[:],
                     thisMacroArgs,
+                    thisMacroLocals,
                 }
                 mode = Mode.NoMacro
                 thisMacroName = ---
                 thisMacroInstrs = ---
                 thisMacroArgs = ---
+                thisMacroLocals = ---
         }
     }
 
@@ -155,7 +167,7 @@ expand_macro :: proc(macro: Macro, args: []tokenizer.Token, line: int) -> []toke
             if !isIdn do continue
 
             if idn in macro.args do virtualInstr.tokens[i] = args[macro.args[idn]]
-            else {
+            else if idn in macro.locals {
                 virtualIdnName := fmt.tprintf("%d%s", line, idn.name)
                 virtualInstr.tokens[i] = tokenizer.Idn{virtualIdnName}
             }
@@ -180,6 +192,7 @@ extract_nonoperators :: proc(instructions: []tokenizer.Instruction_Tokenized) ->
     defer for _, mc in macros {
         delete(mc.instrs)
         delete(mc.args)
+        delete(mc.locals)
     }
 
     operatorsDyn := make([dynamic]tokenizer.Instruction_Tokenized, 0, len(instructions))
@@ -192,49 +205,28 @@ extract_nonoperators :: proc(instructions: []tokenizer.Instruction_Tokenized) ->
     for instr in instructions {
         #partial switch tk in instr.tokens[0] {
             case tokenizer.Mrk:
-                tkC := len(instr.tokens)
-                // would be a switch but you can't initialize variables in a case
-
-                if tkC != 2 { 
-                    log.errorf("Mark on line %d has wrong number of args", instr.lineNum)
-                    delete(operatorsDyn)
-                    delete(marks)
-                    delete(defs)
-                    return nil, nil, nil, false
-                }
-                identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
-                if !argIsId {
-                    log.errorf("Mark on line %d has wrong argument type", instr.lineNum)
+                markName, mrkok := parse_mark(instr)
+                if !mrkok {
                     delete(operatorsDyn)
                     delete(marks)
                     delete(defs)
                     return nil, nil, nil, false
                 }
 
-                marks[identifier.name] = instrIdx
+                marks[markName.name] = instrIdx
                 continue
 
             case tokenizer.Def:
-                tkC := len(instr.tokens)
+                defName, defTo, defOk := parse_def(instr)
 
-                if tkC != 3 {
-                    log.errorf("Def on line %d has wrong number of arguments", instr.lineNum)
-                    delete(operatorsDyn)
-                    delete(marks)
-                    delete(defs)
-                    return nil, nil, nil, false
-                }
-                identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
-                if !argIsId {
-                    log.errorf("Def on line %d has wrong argument type (not an identifier)", instr.lineNum)
+                if !defOk {
                     delete(operatorsDyn)
                     delete(marks)
                     delete(defs)
                     return nil, nil, nil, false
                 }
 
-                defs[identifier.name] = instr.tokens[2]
-
+                defs[defName.name] = defTo
                 continue
 
             case tokenizer.Mki:
@@ -272,6 +264,46 @@ extract_nonoperators :: proc(instructions: []tokenizer.Instruction_Tokenized) ->
 
     operators = operatorsDyn[:]
     return
+}
+
+parse_mark :: proc(instr: tokenizer.Instruction_Tokenized) -> (tokenizer.Idn, bool) {
+    mrk, isMrk := instr.tokens[0].(tokenizer.Mrk)
+    if !isMrk {
+        return ---, false
+    }
+
+    tkC := len(instr.tokens)
+    if tkC != 2 { 
+        log.errorf("Mark on line %d has wrong number of args", instr.lineNum)
+        return ---, false
+    }
+
+    identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
+    if !argIsId {
+        log.errorf("Mark on line %d has wrong argument type", instr.lineNum)
+        return ---, false
+    }
+
+    return identifier, true
+}
+
+parse_def :: proc(instr: tokenizer.Instruction_Tokenized) -> (tokenizer.Idn, tokenizer.Token, bool) {
+    def, isDef := instr.tokens[0].(tokenizer.Def)
+    if !isDef do return ---, ---, false
+
+    tkC := len(instr.tokens)
+    if tkC != 3 {
+        log.errorf("Def on line %d has wrong number of arguments", instr.lineNum)
+        return ---, ---, false
+    }
+
+    identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
+    if !argIsId {
+        log.errorf("Def on line %d has wrong argument type (not an identifier)", instr.lineNum)
+        return ---, ---, false
+    }
+
+    return identifier, instr.tokens[2], true
 }
 
 parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[string]int) -> (program.Instruction, bool) {

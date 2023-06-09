@@ -13,7 +13,8 @@ mov '.' @dtxt
 
 nxt
 
-
+def CAMERA_POS_X &#b000
+def CAMERA_POS_Y &#b001
 
 def MAP_DATA #e000 ; 128x64 world = 8192 spaces
 def WORLD_WIDTH 128
@@ -24,11 +25,17 @@ def ID_DIRT     #01
 def ID_GRASS    #02
 def ID_STONE    #03
 
+; NOTE: this macro assumes that `col` and `to` do not refer to the same value
+; same with `row`/`to`
 ?INDEX_WORLD col row to
 mul row WORLD_WIDTH to
 add to col to
 add to MAP_DATA to
 /?
+
+;
+; World gen
+;
 
 mov 0 y
 mrk world_col
@@ -66,32 +73,51 @@ mrk world_col
     sub y WORLD_HEIGHT t
 tjp world_col
 
+!INDEX_WORLD 12 8 a
+mov ID_AIR &a
+
+
 mrk gameloop
+    mov @msx CAMERA_POS_X
+    mov @msy CAMERA_POS_Y
+
+    ; Drawing
 
     mov b00101_011100_11100 @bg
 
-    mov 0 x
-    mov 0 y
-    mov 0 a
-    mov 0 b
+    shf CAMERA_POS_X 3 t
+    shf CAMERA_POS_Y 3 b
 
-    !INDEX_WORLD 0 b a
+    add CAMERA_POS_X @resx c
+    add CAMERA_POS_Y @resy d
+
+    ; We use `t` instead of `a` for indexing to prevent  
+    ; the macro clobbering its inputs when calculating
+    !INDEX_WORLD t b a
+
+    mul t 8 x
+    sub x CAMERA_POS_X x
+    mul b 8 y
+    sub y CAMERA_POS_Y y
 
     mrk draw_next_tile
         bnd &a #ff @draw
 
-        sub x @resx t
+        sub x c t
         bnd t #8000 t
         tjp no_new_row
-            mov 0 x
             add y 8 y
             add b 1 b
             
-            sub y @resy t
+            sub y d t
             bnd t #8000 t
             fjp done_drawing_tiles
 
-            !INDEX_WORLD 0 b a
+            shf CAMERA_POS_X 3 t
+            !INDEX_WORLD t b a
+
+            mul t 8 x
+            sub x CAMERA_POS_X x
         jmp draw_next_tile
 
         mrk no_new_row

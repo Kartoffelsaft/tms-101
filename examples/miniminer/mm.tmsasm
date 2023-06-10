@@ -1,4 +1,9 @@
 
+def INP_UP    'W'
+def INP_DOWN  'S'
+def INP_LEFT  'A'
+def INP_RIGHT 'D'
+
 mov 0 @bg
 mov 'L' @dtxt
 mov 'o' @dtxt
@@ -78,8 +83,63 @@ mov ID_AIR &a
 
 
 mrk gameloop
-    mov @msx CAMERA_POS_X
-    mov @msy CAMERA_POS_Y
+    mrk next_input
+        mov @input a
+        mov a t
+        fjp no_input
+
+        sub a INP_UP t
+        tjp inp_no_up
+            sub CAMERA_POS_Y 1 CAMERA_POS_Y
+
+            bnd CAMERA_POS_Y #8000 t
+            fjp next_input
+                mov 0 CAMERA_POS_Y
+            
+            jmp next_input
+        mrk inp_no_up
+
+        sub a INP_DOWN t
+        tjp inp_no_down
+            add CAMERA_POS_Y 1 CAMERA_POS_Y
+
+            mul WORLD_HEIGHT 8 b
+            sub b @resy b
+            sub b CAMERA_POS_Y t
+            bnd t #8000 t
+            fjp next_input
+                mov b CAMERA_POS_Y
+
+            jmp next_input
+        mrk inp_no_down
+
+        sub a INP_LEFT t
+        tjp inp_no_left
+            sub CAMERA_POS_X 1 CAMERA_POS_X
+
+            bnd CAMERA_POS_X #8000 t
+            fjp next_input
+                mov 0 CAMERA_POS_X
+
+            jmp next_input
+        mrk inp_no_left
+
+        sub a INP_RIGHT t
+        tjp inp_no_right
+            add CAMERA_POS_X 1 CAMERA_POS_X
+
+            mul WORLD_WIDTH 8 b
+            sub b @resx b
+            sub b CAMERA_POS_X t
+            bnd t #8000 t
+            fjp next_input
+                mov b CAMERA_POS_X
+
+            jmp next_input
+        mrk inp_no_right
+
+        jmp next_input
+    mrk no_input
 
     ; Drawing
 
@@ -123,7 +183,6 @@ mrk gameloop
         mrk no_new_row
             add a 1 a
         jmp draw_next_tile
-
     mrk done_drawing_tiles
 
     nxt

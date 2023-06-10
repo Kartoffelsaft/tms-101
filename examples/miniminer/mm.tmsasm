@@ -40,6 +40,13 @@ add to col to
 add to MAP_DATA to
 /?
 
+?CLAMP_ZERO what
+bnd what #8000 t
+fjp no_clamp
+mov 0 what
+mrk no_clamp
+/?
+
 ;
 ; World gen
 ;
@@ -51,7 +58,7 @@ mrk world_col
         mov MAP_SEED @rng
         shf x 3 a
         shf y 3 b
-        mul b 2 b
+        mul b 4 b
         add a b a
 
         mrk skip_to_rng
@@ -81,6 +88,8 @@ mrk world_col
 
         sub 8 a a
         sub 8 b b
+        mov @rng @void
+        mov @rng @void
 
         bnd @rng #03ff c
         mul a c c
@@ -94,15 +103,26 @@ mrk world_col
         mul b c c
         add d c d
 
-        shf d 15 c
-        mul c #7fff c
-        bxr d c d
+        shf d 1 d
 
         !INDEX_WORLD x y a
 
-        prn d
+        sub y 3 c
+        !CLAMP_ZERO c
+        add c 1 c
+        div #7fff c c
+        sub #6000 c c
+        mul y 256 b
+        sub c b c
+        !CLAMP_ZERO c
 
-        shf d 13 &a
+        sub d c t
+        bnd t #8000 t
+        fjp not_ground
+            mov ID_STONE &a
+            jmp gen_next_tile
+        mrk not_ground
+            mov ID_AIR &a
 
         ; sub y 3 t
         ; bnd t #8000 t

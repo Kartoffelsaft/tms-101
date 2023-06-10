@@ -68,13 +68,13 @@ mrk world_col
         sub 8 a a
         sub 8 b b
 
-        shf @rng 6 c
+        bnd @rng #03ff c
         mul a c c
         mul b c d
 
         sub 8 a a
 
-        shf @rng 6 c
+        bnd @rng #03ff c
         mul a c c
         mul b c c
         add d c d
@@ -82,22 +82,27 @@ mrk world_col
         sub 8 a a
         sub 8 b b
 
-        shf @rng 6 c
+        bnd @rng #03ff c
         mul a c c
         mul b c c
         add d c d
 
         sub 8 a a
 
-        shf @rng 6 c
+        bnd @rng #03ff c
         mul a c c
         mul b c c
         add d c d
 
+        shf d 15 c
+        mul c #7fff c
+        bxr d c d
+
         !INDEX_WORLD x y a
 
-        shf d 14 &a
-        bnd &a b11 &a
+        prn d
+
+        shf d 13 &a
 
         ; sub y 3 t
         ; bnd t #8000 t

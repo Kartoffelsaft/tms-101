@@ -21,6 +21,8 @@ nxt
 def CAMERA_POS_X &#b000
 def CAMERA_POS_Y &#b001
 
+def MAP_SEED &#dff0
+mov @rng MAP_SEED
 def MAP_DATA #e000 ; 128x64 world = 8192 spaces
 def WORLD_WIDTH 128
 def WORLD_HEIGHT 64
@@ -46,28 +48,77 @@ mov 0 y
 mrk world_col
     mov 0 x
     mrk world_row
+        mov MAP_SEED @rng
+        shf x 3 a
+        shf y 3 b
+        mul b 2 b
+        add a b a
+
+        mrk skip_to_rng
+            mov a t
+            fjp at_rng
+
+            mov @rng @void
+            sub a 1 a
+            jmp skip_to_rng
+        mrk at_rng
+    
+        bnd x #7 a
+        bnd y #7 b
+        sub 8 a a
+        sub 8 b b
+
+        shf @rng 6 c
+        mul a c c
+        mul b c d
+
+        sub 8 a a
+
+        shf @rng 6 c
+        mul a c c
+        mul b c c
+        add d c d
+
+        sub 8 a a
+        sub 8 b b
+
+        shf @rng 6 c
+        mul a c c
+        mul b c c
+        add d c d
+
+        sub 8 a a
+
+        shf @rng 6 c
+        mul a c c
+        mul b c c
+        add d c d
+
         !INDEX_WORLD x y a
 
-        sub y 3 t
-        bnd t #8000 t
-        fjp not_air
-            mov ID_AIR &a
-            jmp gen_next_tile
-        mrk not_air
+        shf d 14 &a
+        bnd &a b11 &a
 
-        sub y 3 t
-        tjp not_grass
-            mov ID_GRASS &a
-            jmp gen_next_tile
-        mrk not_grass
+        ; sub y 3 t
+        ; bnd t #8000 t
+        ; fjp not_air
+        ;     mov ID_AIR &a
+        ;     jmp gen_next_tile
+        ; mrk not_air
 
-        sub y 4 t
-        tjp not_dirt
-            mov ID_DIRT &a
-            jmp gen_next_tile
-        mrk not_dirt
+        ; sub y 3 t
+        ; tjp not_grass
+        ;     mov ID_GRASS &a
+        ;     jmp gen_next_tile
+        ; mrk not_grass
 
-        mov ID_STONE &a
+        ; sub y 4 t
+        ; tjp not_dirt
+        ;     mov ID_DIRT &a
+        ;     jmp gen_next_tile
+        ; mrk not_dirt
+
+        ; mov ID_STONE &a
 
         mrk gen_next_tile
         add x 1 x

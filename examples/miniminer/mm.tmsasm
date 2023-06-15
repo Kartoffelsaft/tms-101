@@ -107,11 +107,11 @@ mrk world_col
 
         !INDEX_WORLD x y a
 
-        sub y 3 c
+        sub y 8 c
         !CLAMP_ZERO c
         add c 1 c
         div #7fff c c
-        sub #6000 c c
+        sub #7800 c c
         mul y 256 b
         sub c b c
         !CLAMP_ZERO c

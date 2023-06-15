@@ -27,10 +27,11 @@ def MAP_DATA #e000 ; 128x64 world = 8192 spaces
 def WORLD_WIDTH 128
 def WORLD_HEIGHT 64
 
-def ID_AIR      #00
-def ID_DIRT     #01
-def ID_GRASS    #02
-def ID_STONE    #03
+def ID_AIR          #00
+def ID_DIRT         #01
+def ID_GRASS        #02
+def ID_STONE        #03
+def ID_HELLSTONE    #04
 
 ; NOTE: this macro assumes that `col` and `to` do not refer to the same value
 ; same with `row`/`to`
@@ -120,6 +121,31 @@ mrk world_col
         bnd t #8000 t
         fjp not_ground
             mov ID_STONE &a
+            mul @rng x @rng
+            bnd @rng b11 b
+            add b 13 b
+            sub y b t
+            bnd t #8000 t
+            fjp not_dirt
+                mov ID_DIRT &a
+                sub y 1 y
+                !INDEX_WORLD x y b
+                add y 1 y
+
+                mov &b t
+                tjp not_grass
+                    mov ID_GRASS &a
+                mrk not_grass
+            mrk not_dirt
+
+            bnd @rng b1111 b
+            add b 46 b
+            sub b y t
+            bnd t #8000 t
+            fjp not_hell
+                mov ID_HELLSTONE &a
+            mrk not_hell
+
             jmp gen_next_tile
         mrk not_ground
             mov ID_AIR &a

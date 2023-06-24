@@ -33,6 +33,8 @@ def ID_GRASS        #02
 def ID_STONE        #03
 def ID_HELLSTONE    #04
 
+def SPRITE_CURSOR   #80
+
 ; NOTE: this macro assumes that `col` and `to` do not refer to the same value
 ; same with `row`/`to`
 ?INDEX_WORLD col row to
@@ -286,6 +288,17 @@ mrk gameloop
             add a 1 a
         jmp draw_next_tile
     mrk done_drawing_tiles
+
+    add @msx CAMERA_POS_X x
+    shf x 3 x
+    shf x -3 x
+    sub x CAMERA_POS_X x
+    add @msy CAMERA_POS_Y y
+    shf y 3 y
+    shf y -3 y
+    sub y CAMERA_POS_Y y
+    
+    mov SPRITE_CURSOR @draw
 
     nxt
 jmp gameloop

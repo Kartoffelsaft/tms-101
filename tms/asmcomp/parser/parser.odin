@@ -163,14 +163,23 @@ expand_macro :: proc(macro: Macro, args: []tokenizer.Token, line: int) -> []toke
             slice.clone(instr.tokens),
         }
         for token, i in virtualInstr.tokens {
-            idn, isIdn := token.(tokenizer.Idn)
-            if !isIdn do continue
+            reidentify :: proc(tk: tokenizer.Token, macro: Macro, args: []tokenizer.Token, line: int) -> tokenizer.Token {
+                ref, isRef := tk.(tokenizer.Ref)
+                if isRef do return tokenizer.Ref{new_clone(reidentify(ref.val^, macro, args, line))}
 
-            if idn in macro.args do virtualInstr.tokens[i] = args[macro.args[idn]]
-            else if idn in macro.locals {
-                virtualIdnName := fmt.tprintf("%d%s", line, idn.name)
-                virtualInstr.tokens[i] = tokenizer.Idn{virtualIdnName}
+                idn, isIdn := tk.(tokenizer.Idn)
+                if !isIdn do return tk
+
+                if idn in macro.args do return args[macro.args[idn]]
+                else if idn in macro.locals {
+                    virtualIdnName := fmt.tprintf("%d%s", line, idn.name)
+                    return tokenizer.Idn{virtualIdnName}
+                }
+
+                return tk
             }
+
+            virtualInstr.tokens[i] = reidentify(token, macro, args, line)
         }
 
         append(&retinstrs, virtualInstr)
@@ -323,7 +332,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return Add{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.Sub:
@@ -338,7 +347,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return Sub{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.Mul:
@@ -353,7 +362,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return Mul{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.Div:
@@ -368,7 +377,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return Div{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.Mod:
@@ -383,7 +392,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return Mod{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.BNd:
@@ -398,7 +407,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return BNd{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.BOr:
@@ -413,7 +422,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return BOr{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.BXr:
@@ -428,7 +437,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return BXr{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.Shf:
@@ -443,7 +452,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oklhs && okrhs && oktar {
                 return Shf{nlhs, nrhs, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.Mov:
@@ -457,7 +466,7 @@ parse_instruction :: proc(instr: tokenizer.Instruction_Tokenized, marks: map[str
             if oksrc && oktar {
                 return Mov{nsrc, ntar}, true
             } else {
-                log.errorf("Invalid argument on line %d", instr.lineNum)
+                log.errorf("Invalid argument on line %d (%v)", instr.lineNum, instr.tokens)
                 return nil, false
             }
         case tokenizer.Jmp:
@@ -574,11 +583,20 @@ parse_instructions_tok :: proc(instructions: []tokenizer.Instruction_Tokenized) 
     parsed := make([]program.Instruction, len(unmarked))
     for instr, i in unmarked {
         for tk, j in instr.tokens { 
-            if idn, isIdn := tk.(tokenizer.Idn); isIdn {
-                if idn.name in defmap {
-                    instr.tokens[j] = tokenizer.clone_token(defmap[idn.name])
+            deidentify :: proc(tk: tokenizer.Token, defmap: map[string]tokenizer.Token) -> tokenizer.Token {
+                if idn, isIdn := tk.(tokenizer.Idn); isIdn {
+                    if idn.name in defmap {
+                        return defmap[idn.name]
+                    }
                 }
+                if ref, isRef := tk.(tokenizer.Ref); isRef {
+                    return tokenizer.Ref{ new_clone(deidentify(ref.val^, defmap))}
+                }
+
+                return tk
             }
+
+            instr.tokens[j] = tokenizer.clone_token(deidentify(tk, defmap))
         }
 
         ok := false

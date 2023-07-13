@@ -21,6 +21,26 @@ nxt
 def CAMERA_POS_X &#b000
 def CAMERA_POS_Y &#b001
 
+; Entity 8 words:
+def ENTITY_SIZE 8
+; 0:  u8  unused, u8 ID
+; 1:  i16 health
+; 2:  i16 posX
+; 3:  i16 posY
+; 4:  i16 velX
+; 5:  i16 velY
+; 6,7:32 unused
+
+; first entity is always player
+def ENTITY_DATA #b800
+def ENTITY_DATA_END #c000
+
+def PLAYER_DATA #b800
+def PLAYER_POS_X &#b802
+def PLAYER_POS_Y &#b803
+def PLAYER_VEL_X &#b804
+def PLAYER_VEL_Y &#b805
+
 def MAP_SEED &#dff0
 mov @rng MAP_SEED
 def MAP_DATA #e000 ; 128x64 world = 8192 spaces
@@ -35,6 +55,8 @@ def ID_HELLSTONE    #04
 
 def SPRITE_CURSOR   #80
 
+def ID_PLAYER       #c0
+
 ; NOTE: this macro assumes that `col` and `to` do not refer to the same value
 ; same with `row`/`to`
 ?INDEX_WORLD col row to
@@ -48,6 +70,11 @@ bnd what #8000 t
 fjp no_clamp
 mov 0 what
 mrk no_clamp
+/?
+
+?LOAD_OFFSET base offset to
+add base offset to
+mov &to to
 /?
 
 ;
@@ -185,6 +212,11 @@ tjp world_col
 !INDEX_WORLD 12 8 a
 mov ID_AIR &a
 
+mov ID_PLAYER &PLAYER_DATA
+mov 30 PLAYER_POS_X
+mov 5  PLAYER_POS_Y
+
+
 
 mrk gameloop
     mrk next_input
@@ -239,6 +271,29 @@ mrk gameloop
         mov b CAMERA_POS_X
     mrk no_clamp_right
 
+    ; Entity updating
+    mov ENTITY_DATA a
+
+    mrk next_entity
+        bnd &a #ff t
+        fjp no_entities ; null termination
+
+        sub a ENTITY_DATA_END t
+        bnd t #8000 t
+        fjp no_entities ; end of reserved space for entities
+
+        !LOAD_OFFSET a 4 x
+        !LOAD_OFFSET a 5 y
+
+        add a 2 b
+        add &b x &b
+        add a 3 b
+        add &b y &b
+
+        add a ENTITY_SIZE a
+        jmp next_entity
+    mrk no_entities
+
     ; Drawing
 
     mov b00101_011100_11100 @bg
@@ -282,6 +337,25 @@ mrk gameloop
             add a 1 a
         jmp draw_next_tile
     mrk done_drawing_tiles
+
+    mov ENTITY_DATA a
+    mrk draw_next_entity
+        bnd &a #ff t
+        fjp done_drawing_entities ; null termination
+
+        sub a ENTITY_DATA_END t
+        bnd t #8000 t
+        fjp done_drawing_entities ; end of reserved space for entities
+
+        !LOAD_OFFSET a 2 x
+        sub x CAMERA_POS_X x
+        !LOAD_OFFSET a 3 y
+        sub y CAMERA_POS_Y y
+        bnd &a #ff @draw
+
+        add a ENTITY_SIZE a
+        jmp draw_next_entity
+    mrk done_drawing_entities
 
     add @msx CAMERA_POS_X x
     shf x 3 x

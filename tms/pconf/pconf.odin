@@ -16,7 +16,7 @@ ProgramConfig :: struct {
 load_program_config :: proc() -> (ProgramConfig, bool) {
     if len(os.args) < 2 {
         log.error("You must specify a program to load")
-        return ---, false
+        return {}, false
     }
     conffile := strings.clone(os.args[1]) if os.is_file(os.args[1]) else strings.concatenate({os.args[1], "/conf.json"})
     defer delete(conffile)
@@ -25,14 +25,14 @@ load_program_config :: proc() -> (ProgramConfig, bool) {
     conffiledata, ok := os.read_entire_file_from_filename(conffile)
     if !ok {
         log.errorf("could not open file %s", conffile)
-        return ---, false
+        return {}, false
     }
     defer delete(conffiledata)
     
     confjson, err := json.parse(conffiledata)
     if err != .None {
         log.errorf("json error: %v", err)
-        return ---, false
+        return {}, false
     }
     defer json.destroy_value(confjson)
 

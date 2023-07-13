@@ -18,7 +18,7 @@ compile :: proc(filename: string) -> (^program.Program, bool) {
     if success {
         contentStr := string(content)
         instrsStr, okis := lexer.file_contents_to_intructions_str(contentStr)
-        if !okis do return ---, false
+        if !okis do return nil, false
         defer {
             for inst in instrsStr do lexer.delete_instruction_str(inst)
             delete(instrsStr)
@@ -31,7 +31,7 @@ compile :: proc(filename: string) -> (^program.Program, bool) {
 
 
         instrsTok, oktok := tokenizer.tokenize_instuctions_str(instrsStr)
-        if !oktok do return ---, false
+        if !oktok do return nil, false
         defer tokenizer.delete_instructions_tok(instrsTok)
 
         if context.logger.lowest_level <= log.Level.Info do fmt.println()
@@ -41,12 +41,12 @@ compile :: proc(filename: string) -> (^program.Program, bool) {
 
         
         finalInstructions, parseSuccess := parser.parse_instructions_tok(instrsTok)
-        if !parseSuccess do return ---, false
+        if !parseSuccess do return nil, false
 
         return program.generate_program(finalInstructions), true
     } else {
         log.error("could not open asm file")
     }
 
-    return ---, false
+    return nil, false
 }

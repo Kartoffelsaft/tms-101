@@ -112,7 +112,7 @@ extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
                         log.errorf("Argument %v on line %i for macro %s is not an identifier", instr.tokens[i], instr.lineNum, mcb.name)
                         delete(nonmacrosDyn)
                         delete(macros)
-                        return ---, ---, false
+                        return nil, nil, false
                     }
                     thisMacroArgs[idn] = i-1
                 }
@@ -122,10 +122,10 @@ extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
                     append(&thisMacroInstrs, instr) 
 
                     localDef, _, isDef := parse_def(instr)
-                    if isDef do thisMacroLocals[localDef] = ---
+                    if isDef do thisMacroLocals[localDef] = {}
 
                     localMrk, isMrk := parse_mark(instr)
-                    if isMrk do thisMacroLocals[localMrk] = ---
+                    if isMrk do thisMacroLocals[localMrk] = {}
                     
                     continue
                 }
@@ -136,10 +136,10 @@ extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
                     thisMacroLocals,
                 }
                 mode = Mode.NoMacro
-                thisMacroName = ---
-                thisMacroInstrs = ---
-                thisMacroArgs = ---
-                thisMacroLocals = ---
+                thisMacroName = ""
+                thisMacroInstrs = nil
+                thisMacroArgs = nil
+                thisMacroLocals = nil
         }
     }
 
@@ -148,7 +148,7 @@ extract_macros :: proc(instructions: []tokenizer.Instruction_Tokenized) -> (
         delete(nonmacrosDyn)
         delete(macros)
         delete(thisMacroInstrs)
-        return ---, ---, false
+        return nil, nil, false
     }
 
     return nonmacrosDyn[:], macros, true
@@ -186,7 +186,7 @@ extract_nonoperators :: proc(instructions: []tokenizer.Instruction_Tokenized) ->
     ok: bool,
 ) {
     instructions, macros, mcok := extract_macros(instructions)
-    if !mcok do return ---, ---, ---, false
+    if !mcok do return nil, nil, nil, false
     defer delete(instructions)
     defer delete(macros)
     defer for _, mc in macros {
@@ -269,19 +269,19 @@ extract_nonoperators :: proc(instructions: []tokenizer.Instruction_Tokenized) ->
 parse_mark :: proc(instr: tokenizer.Instruction_Tokenized) -> (tokenizer.Idn, bool) {
     mrk, isMrk := instr.tokens[0].(tokenizer.Mrk)
     if !isMrk {
-        return ---, false
+        return {}, false
     }
 
     tkC := len(instr.tokens)
     if tkC != 2 { 
         log.errorf("Mark on line %d has wrong number of args", instr.lineNum)
-        return ---, false
+        return {}, false
     }
 
     identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
     if !argIsId {
         log.errorf("Mark on line %d has wrong argument type", instr.lineNum)
-        return ---, false
+        return {}, false
     }
 
     return identifier, true
@@ -289,18 +289,18 @@ parse_mark :: proc(instr: tokenizer.Instruction_Tokenized) -> (tokenizer.Idn, bo
 
 parse_def :: proc(instr: tokenizer.Instruction_Tokenized) -> (tokenizer.Idn, tokenizer.Token, bool) {
     def, isDef := instr.tokens[0].(tokenizer.Def)
-    if !isDef do return ---, ---, false
+    if !isDef do return {}, {}, false
 
     tkC := len(instr.tokens)
     if tkC != 3 {
         log.errorf("Def on line %d has wrong number of arguments", instr.lineNum)
-        return ---, ---, false
+        return {}, {}, false
     }
 
     identifier, argIsId := instr.tokens[1].(tokenizer.Idn)
     if !argIsId {
         log.errorf("Def on line %d has wrong argument type (not an identifier)", instr.lineNum)
-        return ---, ---, false
+        return {}, {}, false
     }
 
     return identifier, instr.tokens[2], true

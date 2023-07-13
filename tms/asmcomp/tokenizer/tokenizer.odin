@@ -190,7 +190,7 @@ tokenize_instuction_str :: proc(instr: lexer.Instruction_Str) -> (Instruction_To
     for c, i in instr.contents {
         ok := false
         tks[i], ok = tokenize(c)
-        if !ok do return ---, false
+        if !ok do return {}, false
     }
 
     return Instruction_Tokenized {
